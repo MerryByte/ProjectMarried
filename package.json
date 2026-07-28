@@ -2,6 +2,6 @@
   "name": "our-wedding-memories",
   "private": true,
   "scripts": {
-    "build": "mkdir -p dist && cp index.html styles.css script.js dist/ && cp -r public dist/"
+    "build": "mkdir -p dist/server dist/.openai && cp index.html styles.css script.js dist/ && cp -r public dist/ && cp server/index.js dist/server/ && cp .openai/hosting.json dist/.openai/"
   }
 }
