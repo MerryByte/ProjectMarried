@@ -1,0 +1,7 @@
+{
+  "name": "our-wedding-memories",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p dist && cp index.html styles.css script.js dist/ && cp -r public dist/"
+  }
+}
