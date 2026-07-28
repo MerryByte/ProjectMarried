@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alex & Jamie | 06.14.26</title>
+  <meta name="description" content="Share your favorite moments from our wedding day.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="shade"></div>
+      <nav>
+        <a class="monogram" href="#" aria-label="Home">A <i>&</i> J</a>
+        <a href="#share">Share a memory</a>
+      </nav>
+
+      <div class="hero-copy">
+        <p class="eyebrow">We said yes</p>
+        <h1>Alex <em>&</em> Jamie</h1>
+        <p class="date">JUNE 14, 2026 · NAPA VALLEY</p>
+        <a class="scroll" href="#share">
+          <span>Share the joy</span>
+          <b>↓</b>
+        </a>
+      </div>
+    </section>
+
+    <section class="share" id="share">
+      <p class="eyebrow">From your point of view</p>
+      <h2>Help us remember<br>every little moment.</h2>
+      <p class="intro">
+        The happy tears, the dance moves, the moments we missed—
+        share your photos and videos from our day.
+      </p>
+
+      <div class="actions">
+        <button id="uploadButton">
+          <span class="icon">▧</span>
+          <span><strong>Choose from library</strong><small>Photos and videos</small></span>
+          <b>→</b>
+        </button>
+        <button id="cameraButton">
+          <span class="icon">◎</span>
+          <span><strong>Open camera</strong><small>Capture a moment now</small></span>
+          <b>→</b>
+        </button>
+      </div>
+
+      <input id="uploadInput" type="file" accept="image/*,video/*" multiple hidden>
+      <input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
+
+      <div class="selection" id="selection" hidden>
+        <span>✓</span>
+        <div>
+          <strong id="selectionCount"></strong>
+          <small id="selectionNames"></small>
+        </div>
+        <button id="clearButton">Clear</button>
+      </div>
+
+      <p class="privacy">Your memories stay private and are shared only with the couple.</p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

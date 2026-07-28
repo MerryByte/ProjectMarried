@@ -1,0 +1,66 @@
+:root {
+  --cream: #f5f0e7;
+  --ink: #203127;
+  --sage: #637565;
+  --line: #d7d4c8;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: "DM Sans", sans-serif; }
+a { color: inherit; }
+
+.hero {
+  min-height: 100svh;
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: url("public/couple-hero.png") 58% center / cover no-repeat;
+}
+
+.shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,22,15,.58), rgba(10,22,15,.12) 65%), linear-gradient(0deg, rgba(8,19,12,.38), transparent 50%); }
+nav { position: absolute; z-index: 2; inset: 0 0 auto; height: 96px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.25); }
+nav a { text-decoration: none; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; }
+.monogram { font: 22px "Italiana", serif; letter-spacing: .08em; }
+.monogram i { font-size: 14px; }
+.hero-copy { position: relative; z-index: 1; text-align: center; padding: 100px 24px 20px; }
+.eyebrow { margin: 0 0 24px; text-transform: uppercase; letter-spacing: .32em; font-size: 11px; font-weight: 600; }
+h1, h2 { margin: 0; font: 400 clamp(62px, 10vw, 150px)/.87 "Italiana", serif; letter-spacing: -.04em; }
+h1 em { font-weight: 400; font-size: .66em; }
+.date { margin: 34px 0 0; font-size: 11px; letter-spacing: .3em; }
+.scroll { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 100px; text-decoration: none; text-transform: uppercase; letter-spacing: .2em; font-size: 9px; }
+.scroll b { font-size: 22px; font-weight: 400; }
+
+.share { min-height: 100svh; padding: 120px 24px 80px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.share .eyebrow { color: var(--sage); }
+h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
+.intro { max-width: 530px; margin: 30px auto 48px; color: #6d766f; line-height: 1.8; font-size: 15px; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(280px, 360px)); gap: 14px; }
+.actions button { border: 1px solid var(--line); background: rgba(255,255,255,.42); padding: 21px 22px; min-height: 94px; color: var(--ink); display: grid; grid-template-columns: 48px 1fr 20px; gap: 16px; align-items: center; text-align: left; cursor: pointer; transition: .25s ease; }
+.actions button:hover { border-color: var(--sage); background: white; transform: translateY(-2px); box-shadow: 0 12px 28px rgba(32,49,39,.08); }
+.actions button > b { font-size: 22px; font-weight: 400; }
+.actions strong, .actions small { display: block; }
+.actions strong { font: 18px "Italiana", serif; margin-bottom: 6px; }
+.actions small { color: #7c857e; }
+.icon { width: 48px; height: 48px; border-radius: 50%; background: #e1e6dd; display: grid; place-items: center; font-size: 24px; }
+.selection { width: min(734px, 100%); margin-top: 18px; padding: 16px 18px; background: #e5ebe2; display: flex; align-items: center; gap: 14px; text-align: left; }
+.selection[hidden] { display: none; }
+.selection > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: white; background: var(--sage); }
+.selection div { min-width: 0; flex: 1; }
+.selection strong, .selection small { display: block; }
+.selection small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #687269; margin-top: 3px; }
+.selection button { border: 0; background: transparent; color: var(--sage); cursor: pointer; text-decoration: underline; }
+.privacy { margin-top: 28px; color: #899088; font-size: 11px; }
+
+@media (max-width: 680px) {
+  nav { height: 76px; padding: 0 22px; }
+  nav > a:last-child { display: none; }
+  .hero { background-position: 66% center; }
+  .shade { background: linear-gradient(0deg, rgba(7,18,11,.63), rgba(7,18,11,.05) 75%); }
+  .hero-copy { align-self: end; padding-bottom: 50px; }
+  h1 { font-size: 64px; }
+  .scroll { margin-top: 52px; }
+  .share { padding-top: 90px; }
+  .actions { grid-template-columns: 1fr; width: 100%; }
+}
