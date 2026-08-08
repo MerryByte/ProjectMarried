@@ -88,7 +88,7 @@ async function getUploadConfig() {
 async function uploadFile(file, config) {
   const extension = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : "jpg";
   const dateFolder = new Date().toISOString().slice(0, 10);
-  const objectName = `guest/${dateFolder}/${crypto.randomUUID()}.${extension}`;
+  const objectName = `guest/${dateFolder}/${createObjectId()}.${extension}`;
   const objectPath = objectName.split("/").map(encodeURIComponent).join("/");
   const response = await fetch(`${config.supabaseUrl}/storage/v1/object/${config.bucket}/${objectPath}`, {
     method: "POST",
@@ -105,6 +105,24 @@ async function uploadFile(file, config) {
     const details = await response.json().catch(() => ({}));
     throw new Error(details.message || details.error || `Upload failed (${response.status}).`);
   }
+}
+
+function createObjectId() {
+  const webCrypto = globalThis.crypto;
+
+  if (typeof webCrypto?.randomUUID === "function") {
+    return webCrypto.randomUUID();
+  }
+
+  if (typeof webCrypto?.getRandomValues === "function") {
+    const bytes = webCrypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = [...bytes].map(byte => byte.toString(16).padStart(2, "0"));
+    return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
 function setStatus(message, type = "") {
