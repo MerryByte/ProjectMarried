@@ -7,6 +7,7 @@ const submitButton = document.querySelector("#submitButton");
 const uploadStatus = document.querySelector("#uploadStatus");
 let selectedFiles = [];
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
+const RSVP_SESSION_KEY = "weddingRsvpSession";
 
 document.querySelector("#uploadButton").addEventListener("click", () => uploadInput.click());
 document.querySelector("#cameraButton").addEventListener("click", () => cameraInput.click());
@@ -53,10 +54,11 @@ async function uploadFiles() {
 
   try {
     const config = await getUploadConfig();
+    const uploader = await getUploaderIdentity(config);
 
     for (let index = 0; index < filesToUpload.length; index += 1) {
-      setStatus(`Uploading ${index + 1} of ${filesToUpload.length}…`);
-      await uploadFile(filesToUpload[index], config);
+      setStatus(`Uploading ${index + 1} of ${filesToUpload.length} as ${uploader.familyName}…`);
+      await uploadFile(filesToUpload[index], config, uploader);
     }
 
     selectedFiles = [];
@@ -85,16 +87,65 @@ async function getUploadConfig() {
   return config;
 }
 
-async function uploadFile(file, config) {
+async function getUploaderIdentity(config) {
+  const stored = localStorage.getItem(RSVP_SESSION_KEY);
+  if (!stored) {
+    throw new Error("Sign in to your RSVP account before uploading photos.");
+  }
+
+  let session;
+  try {
+    session = JSON.parse(stored);
+  } catch {
+    localStorage.removeItem(RSVP_SESSION_KEY);
+    throw new Error("Sign in to your RSVP account before uploading photos.");
+  }
+
+  if (!session.refresh_token) {
+    localStorage.removeItem(RSVP_SESSION_KEY);
+    throw new Error("Your login expired. Sign in to your RSVP account again.");
+  }
+
+  if (!session.expires_at || session.expires_at * 1000 <= Date.now() + 60000) {
+    const refreshResponse = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { apikey: config.anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: session.refresh_token }),
+    });
+    const refreshed = await refreshResponse.json();
+    if (!refreshResponse.ok) {
+      localStorage.removeItem(RSVP_SESSION_KEY);
+      throw new Error("Your login expired. Sign in to your RSVP account again.");
+    }
+    session = refreshed;
+    localStorage.setItem(RSVP_SESSION_KEY, JSON.stringify(session));
+  }
+
+  const authHeaders = { apikey: config.anonKey, Authorization: `Bearer ${session.access_token}` };
+  const userResponse = await fetch(`${config.supabaseUrl}/auth/v1/user`, { headers: authHeaders });
+  if (!userResponse.ok) {
+    localStorage.removeItem(RSVP_SESSION_KEY);
+    throw new Error("Your login expired. Sign in to your RSVP account again.");
+  }
+  const user = await userResponse.json();
+  const rsvpResponse = await fetch(`${config.supabaseUrl}/rest/v1/rsvps?select=family_name&user_id=eq.${encodeURIComponent(user.id)}&limit=1`, { headers: authHeaders });
+  const reservations = await rsvpResponse.json();
+  if (!rsvpResponse.ok) throw new Error(reservations.message || "Unable to load your reservation name.");
+  if (!reservations[0]?.family_name) throw new Error("Save your reservation before uploading photos.");
+
+  return { userId: user.id, familyName: reservations[0].family_name, accessToken: session.access_token };
+}
+
+async function uploadFile(file, config, uploader) {
   const extension = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : "jpg";
   const dateFolder = new Date().toISOString().slice(0, 10);
-  const objectName = `guest/${dateFolder}/${createObjectId()}.${extension}`;
+  const objectName = `guest/${uploader.userId}/${dateFolder}/${createObjectId()}.${extension}`;
   const objectPath = objectName.split("/").map(encodeURIComponent).join("/");
   const response = await fetch(`${config.supabaseUrl}/storage/v1/object/${config.bucket}/${objectPath}`, {
     method: "POST",
     headers: {
       apikey: config.anonKey,
-      Authorization: `Bearer ${config.anonKey}`,
+      Authorization: `Bearer ${uploader.accessToken}`,
       "Content-Type": file.type,
       "x-upsert": "false",
     },
