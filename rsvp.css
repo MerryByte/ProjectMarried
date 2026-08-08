@@ -1,0 +1,16 @@
+:root { --cream:#f5f0e7; --ink:#203127; --sage:#637565; --line:#d7d4c8; }
+* { box-sizing:border-box; }
+body { margin:0; min-height:100vh; background:var(--cream); color:var(--ink); font-family:"DM Sans",sans-serif; }
+button,input,textarea { font:inherit; }
+header { height:78px; padding:0 5vw; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+.monogram { color:inherit; text-decoration:none; font:22px "Italiana",serif; letter-spacing:.08em; }.monogram i{font-size:14px}
+header button { border:0; background:transparent; color:var(--sage); cursor:pointer; text-decoration:underline; }
+main { width:min(520px,calc(100% - 32px)); margin:8vh auto 60px; }
+.card { text-align:center; }.card[hidden],header button[hidden]{display:none}
+.eyebrow { margin:0 0 18px; color:var(--sage); text-transform:uppercase; letter-spacing:.28em; font-size:10px; font-weight:600; }
+h1 { margin:0; font:400 clamp(48px,8vw,72px)/.95 "Italiana",serif; letter-spacing:-.03em; }
+.intro { margin:24px auto 30px; color:#6d766f; line-height:1.7; }
+.tabs { display:grid; grid-template-columns:1fr 1fr; margin-bottom:18px; border-bottom:1px solid var(--line); }.tabs button{padding:13px;border:0;background:transparent;color:#7b837d;cursor:pointer}.tabs .active{color:var(--ink);border-bottom:2px solid var(--ink)}
+form { display:grid; gap:16px; text-align:left; }label,legend{font-size:12px;font-weight:600}input,textarea{display:block;width:100%;margin-top:7px;padding:14px;border:1px solid var(--line);background:white;color:var(--ink)}
+fieldset{margin:0;padding:14px;border:1px solid var(--line)}.choice{display:flex;align-items:center;gap:9px;margin-top:12px;font-weight:400}.choice input{width:auto;margin:0}.counts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+form>button{min-height:54px;border:0;background:var(--ink);color:white;cursor:pointer;text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600}form>button:disabled{opacity:.6;cursor:wait}.status{min-height:22px;color:#a13d35;font-size:13px}.status.success{color:#37623f}
