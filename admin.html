@@ -32,6 +32,11 @@
       <p class="status" id="loginStatus" role="status" aria-live="polite"></p>
     </section>
 
+    <nav class="admin-tabs" id="adminTabs" hidden>
+      <button class="active" id="photosTab" type="button">Photos</button>
+      <button id="reservationsTab" type="button">Reservations</button>
+    </nav>
+
     <section class="gallery" id="gallerySection" hidden>
       <div class="gallery-heading">
         <div>
@@ -42,6 +47,18 @@
       </div>
       <p class="status" id="galleryStatus" role="status" aria-live="polite">Loading photos…</p>
       <div class="photo-grid" id="photoGrid"></div>
+    </section>
+
+    <section class="reservations" id="reservationsSection" hidden>
+      <div class="gallery-heading"><div><p class="eyebrow">Guest responses</p><h1>Reservations</h1></div></div>
+      <div class="totals" id="reservationTotals"></div>
+      <p class="status" id="reservationStatus" role="status" aria-live="polite">Loading reservations…</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Family</th><th>Response</th><th>Adults</th><th>Children</th><th>Total</th><th>Notes</th><th>Submitted</th></tr></thead>
+          <tbody id="reservationRows"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 

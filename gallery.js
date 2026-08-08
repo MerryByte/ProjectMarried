@@ -6,10 +6,21 @@ const galleryStatus = document.querySelector("#galleryStatus");
 const photoGrid = document.querySelector("#photoGrid");
 const photoCount = document.querySelector("#photoCount");
 const logoutButton = document.querySelector("#logoutButton");
+const adminTabs = document.querySelector("#adminTabs");
+const photosTab = document.querySelector("#photosTab");
+const reservationsTab = document.querySelector("#reservationsTab");
+const reservationsSection = document.querySelector("#reservationsSection");
+const reservationStatus = document.querySelector("#reservationStatus");
+const reservationRows = document.querySelector("#reservationRows");
+const reservationTotals = document.querySelector("#reservationTotals");
 let objectUrls = [];
+let activeConfig;
+let activeToken;
 
 loginForm.addEventListener("submit", signIn);
 logoutButton.addEventListener("click", signOut);
+photosTab.addEventListener("click", () => switchView("photos"));
+reservationsTab.addEventListener("click", () => switchView("reservations"));
 
 async function signIn(event) {
   event.preventDefault();
@@ -41,8 +52,11 @@ async function signIn(event) {
 }
 
 async function showGallery(config, token) {
+  activeConfig = config;
+  activeToken = token;
   loginSection.hidden = true;
   gallerySection.hidden = false;
+  adminTabs.hidden = false;
   logoutButton.hidden = false;
   galleryStatus.textContent = "Loading photos…";
 
@@ -64,6 +78,42 @@ async function showGallery(config, token) {
     galleryStatus.textContent = error.message;
     if (/401|JWT|authorized|permission/i.test(error.message)) signOut();
   }
+}
+
+async function switchView(view) {
+  const showPhotos = view === "photos";
+  photosTab.classList.toggle("active", showPhotos);
+  reservationsTab.classList.toggle("active", !showPhotos);
+  gallerySection.hidden = !showPhotos;
+  reservationsSection.hidden = showPhotos;
+  if (!showPhotos) await loadReservations();
+}
+
+async function loadReservations() {
+  reservationStatus.textContent = "Loading reservations…";
+  const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/rsvps?select=family_name,attending,adult_count,child_count,notes,created_at&order=created_at.desc`, {
+    headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}` },
+  });
+  const rows = await response.json();
+  if (!response.ok) { reservationStatus.textContent = rows.message || "Unable to load reservations."; return; }
+
+  const attending = rows.filter(row => row.attending);
+  const adults = attending.reduce((sum, row) => sum + row.adult_count, 0);
+  const children = attending.reduce((sum, row) => sum + row.child_count, 0);
+  const cards = [[attending.length,"Families coming"],[adults,"Adults"],[children,"Children"],[adults + children,"Total guests"]];
+  reservationTotals.replaceChildren(...cards.map(([value,label]) => {
+    const card=document.createElement("div"); card.className="total";
+    const strong=document.createElement("strong"); strong.textContent=value;
+    const span=document.createElement("span"); span.textContent=label;
+    card.append(strong,span); return card;
+  }));
+  reservationRows.replaceChildren(...rows.map(row => {
+    const tr=document.createElement("tr");
+    const values=[row.family_name,row.attending?"Attending":"Declined",row.adult_count,row.child_count,row.adult_count+row.child_count,row.notes||"—",new Date(row.created_at).toLocaleDateString()];
+    values.forEach((value,index) => { const td=document.createElement("td"); td.textContent=value; if(index===1)td.className=row.attending?"yes":"no"; if(index===5)td.className="notes"; tr.append(td); });
+    return tr;
+  }));
+  reservationStatus.textContent = rows.length ? "" : "No reservations have been submitted yet.";
 }
 
 async function listFolder(config, token, prefix) {
@@ -106,6 +156,8 @@ function signOut() {
   objectUrls = [];
   photoGrid.replaceChildren();
   gallerySection.hidden = true;
+  reservationsSection.hidden = true;
+  adminTabs.hidden = true;
   logoutButton.hidden = true;
   loginSection.hidden = false;
   loginStatus.textContent = "";
