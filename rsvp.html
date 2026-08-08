@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RSVP | Anatoliy & Elizabeth</title>
+  <meta name="description" content="RSVP for the wedding of Anatoliy and Elizabeth.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="rsvp.css">
+</head>
+<body>
+  <header><a class="monogram" href="index.html">A <i>&</i> L</a><button id="logoutButton" hidden>Log out</button></header>
+  <main>
+    <section id="authSection" class="card">
+      <p class="eyebrow">December 14, 2026</p>
+      <h1>Reserve your seats</h1>
+      <p class="intro">Create one account for your household. You can return later to update your response.</p>
+      <div class="tabs"><button id="signupTab" class="active">Create account</button><button id="loginTab">Sign in</button></div>
+      <form id="authForm">
+        <label>Email<input id="email" type="email" autocomplete="username" required></label>
+        <label>Password<input id="password" type="password" minlength="8" autocomplete="new-password" required></label>
+        <button id="authSubmit" type="submit">Create account</button>
+      </form>
+      <p class="status" id="authStatus" role="status"></p>
+    </section>
+
+    <section id="rsvpSection" class="card" hidden>
+      <p class="eyebrow">Your response</p>
+      <h1>Will you join us?</h1>
+      <form id="rsvpForm">
+        <label>Family or household name<input id="familyName" maxlength="100" required placeholder="The Smith family"></label>
+        <fieldset><legend>Are you attending?</legend><label class="choice"><input type="radio" name="attending" value="true" checked> Joyfully accepts</label><label class="choice"><input type="radio" name="attending" value="false"> Regretfully declines</label></fieldset>
+        <div class="counts"><label>Adults<input id="adultCount" type="number" min="0" max="20" value="1" required></label><label>Children<input id="childCount" type="number" min="0" max="20" value="0" required></label></div>
+        <label>Message or dietary notes<textarea id="notes" maxlength="500" rows="4"></textarea></label>
+        <button type="submit">Save reservation</button>
+      </form>
+      <p class="status" id="rsvpStatus" role="status"></p>
+    </section>
+  </main>
+  <script src="config.js"></script><script src="rsvp.js"></script>
+</body>
+</html>

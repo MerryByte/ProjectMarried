@@ -64,6 +64,7 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 @media (max-width: 680px) {
   nav { height: 76px; padding: 0 22px; }
   .nav-links { display: flex; }
+  .nav-links { gap: 16px; }
   .nav-links a:first-child { display: none; }
   .hero { background-position: center; }
   .shade { background: linear-gradient(0deg, rgba(7,18,11,.63), rgba(7,18,11,.05) 75%); }
