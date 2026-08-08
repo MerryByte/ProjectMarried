@@ -83,24 +83,65 @@ async function showGallery(config, token) {
   galleryStatus.textContent = "Loading photos…";
 
   try {
-    const dateFolders = await listFolder(config, token, "guest");
-    const folders = dateFolders.filter(item => !item.id);
-    const fileGroups = await Promise.all(folders.map(folder => listFolder(config, token, `guest/${folder.name}`)));
-    const photos = fileGroups.flatMap((files, index) => files
-      .filter(file => file.id && file.metadata?.mimetype?.startsWith("image/"))
-      .map(file => ({ ...file, path: `guest/${folders[index].name}/${file.name}` })))
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const [photos, familyNames] = await Promise.all([
+      discoverPhotos(config, token),
+      loadFamilyNames(config, token),
+    ]);
 
     photoGrid.replaceChildren();
     galleryPhotos = [];
     photoCount.textContent = `${photos.length} ${photos.length === 1 ? "photo" : "photos"}`;
     galleryStatus.textContent = photos.length ? "" : "No photos have been uploaded yet.";
 
-    for (const photo of photos) await addPhoto(config, token, photo);
+    for (const photo of photos) {
+      const familyName = photo.uploaderId ? familyNames.get(photo.uploaderId) || "Unknown reservation" : "Unknown guest";
+      await addPhoto(config, token, photo, familyName);
+    }
   } catch (error) {
     galleryStatus.textContent = error.message;
     if (/401|JWT|authorized|permission/i.test(error.message)) signOut();
   }
+}
+
+async function loadFamilyNames(config, token) {
+  const response = await fetch(`${config.supabaseUrl}/rest/v1/rsvps?select=user_id,family_name`, {
+    headers: { apikey: config.anonKey, Authorization: `Bearer ${token}` },
+  });
+  const rows = await response.json();
+  if (!response.ok) throw new Error(rows.message || "Unable to match photos to reservations.");
+  return new Map(rows.map(row => [row.user_id, row.family_name]));
+}
+
+async function discoverPhotos(config, token) {
+  const topFolders = (await listFolder(config, token, "guest")).filter(item => !item.id);
+  const photos = [];
+
+  for (const topFolder of topFolders) {
+    if (isUuid(topFolder.name)) {
+      const dateFolders = (await listFolder(config, token, `guest/${topFolder.name}`)).filter(item => !item.id);
+      for (const dateFolder of dateFolders) {
+        const files = await listFolder(config, token, `guest/${topFolder.name}/${dateFolder.name}`);
+        photos.push(...files
+          .filter(isImageFile)
+          .map(file => ({ ...file, uploaderId: topFolder.name, path: `guest/${topFolder.name}/${dateFolder.name}/${file.name}` })));
+      }
+    } else {
+      const files = await listFolder(config, token, `guest/${topFolder.name}`);
+      photos.push(...files
+        .filter(isImageFile)
+        .map(file => ({ ...file, uploaderId: null, path: `guest/${topFolder.name}/${file.name}` })));
+    }
+  }
+
+  return photos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function isImageFile(file) {
+  return file.id && file.metadata?.mimetype?.startsWith("image/");
 }
 
 async function switchView(view) {
@@ -150,7 +191,7 @@ async function listFolder(config, token, prefix) {
   return result;
 }
 
-async function addPhoto(config, token, photo) {
+async function addPhoto(config, token, photo, familyName) {
   const path = photo.path.split("/").map(encodeURIComponent).join("/");
   const response = await fetch(`${config.supabaseUrl}/storage/v1/object/authenticated/${config.bucket}/${path}`, {
     headers: { apikey: config.anonKey, Authorization: `Bearer ${token}` },
@@ -159,7 +200,7 @@ async function addPhoto(config, token, photo) {
 
   const objectUrl = URL.createObjectURL(await response.blob());
   objectUrls.push(objectUrl);
-  galleryPhotos.push({ objectUrl, name: photo.name });
+  galleryPhotos.push({ objectUrl, name: photo.name, familyName });
   const photoIndex = galleryPhotos.length - 1;
   const card = document.createElement("article");
   card.className = "photo";
@@ -176,8 +217,11 @@ async function addPhoto(config, token, photo) {
   download.href = objectUrl;
   download.download = photo.name;
   download.textContent = "Download";
+  const uploader = document.createElement("p");
+  uploader.className = "photo-uploader";
+  uploader.textContent = familyName;
   viewButton.append(image);
-  card.append(viewButton, download);
+  card.append(viewButton, download, uploader);
   photoGrid.append(card);
 }
 
@@ -191,7 +235,7 @@ function showLightboxPhoto(index) {
   activePhotoIndex = (index + galleryPhotos.length) % galleryPhotos.length;
   const photo = galleryPhotos[activePhotoIndex];
   lightboxImage.src = photo.objectUrl;
-  lightboxCaption.textContent = `${activePhotoIndex + 1} of ${galleryPhotos.length}`;
+  lightboxCaption.textContent = `${photo.familyName} · ${activePhotoIndex + 1} of ${galleryPhotos.length}`;
   const hasMultiplePhotos = galleryPhotos.length > 1;
   lightboxPrevious.hidden = !hasMultiplePhotos;
   lightboxNext.hidden = !hasMultiplePhotos;
