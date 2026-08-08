@@ -1,5 +1,6 @@
 -- Run this once in the SQL editor of the self-hosted Supabase dashboard.
--- Guests may upload images, but cannot list, read, replace, or delete them.
+-- Signed-in guests may upload images under their own account ID, but cannot
+-- list, read, replace, or delete them. Gallery admins retain read access.
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -19,10 +20,11 @@ drop policy if exists "Wedding guests can upload photos" on storage.objects;
 create policy "Wedding guests can upload photos"
 on storage.objects
 for insert
-to anon
+to authenticated
 with check (
   bucket_id = 'wedding-uploads'
   and (storage.foldername(name))[1] = 'guest'
+  and (storage.foldername(name))[2] = (select auth.uid())::text
 );
 
 drop policy if exists "Wedding gallery admin can view photos" on storage.objects;
