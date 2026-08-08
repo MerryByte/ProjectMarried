@@ -22,6 +22,7 @@ a { color: inherit; }
 .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,22,15,.58), rgba(10,22,15,.12) 65%), linear-gradient(0deg, rgba(8,19,12,.38), transparent 50%); }
 nav { position: absolute; z-index: 2; inset: 0 0 auto; height: 96px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.25); }
 nav a { text-decoration: none; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; }
+.nav-links { display: flex; align-items: center; gap: 28px; }
 .monogram { font: 22px "Italiana", serif; letter-spacing: .08em; }
 .monogram i { font-size: 14px; }
 .hero-copy { position: relative; z-index: 1; text-align: center; padding: 100px 24px 20px; }
@@ -62,7 +63,7 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 
 @media (max-width: 680px) {
   nav { height: 76px; padding: 0 22px; }
-  nav > a:last-child { display: none; }
+  .nav-links { display: none; }
   .hero { background-position: center; }
   .shade { background: linear-gradient(0deg, rgba(7,18,11,.63), rgba(7,18,11,.05) 75%); }
   .hero-copy { align-self: end; padding-bottom: 50px; }

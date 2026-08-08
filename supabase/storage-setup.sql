@@ -24,3 +24,14 @@ with check (
   bucket_id = 'wedding-uploads'
   and (storage.foldername(name))[1] = 'guest'
 );
+
+drop policy if exists "Wedding gallery admin can view photos" on storage.objects;
+
+create policy "Wedding gallery admin can view photos"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'wedding-uploads'
+  and coalesce((auth.jwt() -> 'app_metadata' ->> 'gallery_admin')::boolean, false)
+);
