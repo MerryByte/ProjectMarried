@@ -11,6 +11,7 @@ const RSVP_SESSION_KEY = "weddingRsvpSession";
 
 document.querySelector("#uploadButton").addEventListener("click", () => uploadInput.click());
 document.querySelector("#cameraButton").addEventListener("click", () => cameraInput.click());
+document.querySelector("#floatingCameraButton").addEventListener("click", () => cameraInput.click());
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", uploadFiles);
 
