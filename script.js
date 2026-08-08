@@ -57,7 +57,7 @@ async function uploadFiles() {
     const uploader = await getUploaderIdentity(config);
 
     for (let index = 0; index < filesToUpload.length; index += 1) {
-      setStatus(`Uploading ${index + 1} of ${filesToUpload.length} as ${uploader.familyName}…`);
+      setStatus(`Uploading ${index + 1} of ${filesToUpload.length}${uploader.familyName ? ` as ${uploader.familyName}` : ""}…`);
       await uploadFile(filesToUpload[index], config, uploader);
     }
 
@@ -90,7 +90,7 @@ async function getUploadConfig() {
 async function getUploaderIdentity(config) {
   const stored = localStorage.getItem(RSVP_SESSION_KEY);
   if (!stored) {
-    throw new Error("Sign in to your RSVP account before uploading photos.");
+    return anonymousUploader(config);
   }
 
   let session;
@@ -98,12 +98,12 @@ async function getUploaderIdentity(config) {
     session = JSON.parse(stored);
   } catch {
     localStorage.removeItem(RSVP_SESSION_KEY);
-    throw new Error("Sign in to your RSVP account before uploading photos.");
+    return anonymousUploader(config);
   }
 
   if (!session.refresh_token) {
     localStorage.removeItem(RSVP_SESSION_KEY);
-    throw new Error("Your login expired. Sign in to your RSVP account again.");
+    return anonymousUploader(config);
   }
 
   if (!session.expires_at || session.expires_at * 1000 <= Date.now() + 60000) {
@@ -115,7 +115,7 @@ async function getUploaderIdentity(config) {
     const refreshed = await refreshResponse.json();
     if (!refreshResponse.ok) {
       localStorage.removeItem(RSVP_SESSION_KEY);
-      throw new Error("Your login expired. Sign in to your RSVP account again.");
+      return anonymousUploader(config);
     }
     session = refreshed;
     localStorage.setItem(RSVP_SESSION_KEY, JSON.stringify(session));
@@ -125,21 +125,26 @@ async function getUploaderIdentity(config) {
   const userResponse = await fetch(`${config.supabaseUrl}/auth/v1/user`, { headers: authHeaders });
   if (!userResponse.ok) {
     localStorage.removeItem(RSVP_SESSION_KEY);
-    throw new Error("Your login expired. Sign in to your RSVP account again.");
+    return anonymousUploader(config);
   }
   const user = await userResponse.json();
   const rsvpResponse = await fetch(`${config.supabaseUrl}/rest/v1/rsvps?select=family_name&user_id=eq.${encodeURIComponent(user.id)}&limit=1`, { headers: authHeaders });
   const reservations = await rsvpResponse.json();
   if (!rsvpResponse.ok) throw new Error(reservations.message || "Unable to load your reservation name.");
-  if (!reservations[0]?.family_name) throw new Error("Save your reservation before uploading photos.");
+  if (!reservations[0]?.family_name) return anonymousUploader(config);
 
   return { userId: user.id, familyName: reservations[0].family_name, accessToken: session.access_token };
+}
+
+function anonymousUploader(config) {
+  return { userId: null, familyName: null, accessToken: config.anonKey };
 }
 
 async function uploadFile(file, config, uploader) {
   const extension = file.name.includes(".") ? file.name.split(".").pop().toLowerCase() : "jpg";
   const dateFolder = new Date().toISOString().slice(0, 10);
-  const objectName = `guest/${uploader.userId}/${dateFolder}/${createObjectId()}.${extension}`;
+  const ownerFolder = uploader.userId || "anonymous";
+  const objectName = `guest/${ownerFolder}/${dateFolder}/${createObjectId()}.${extension}`;
   const objectPath = objectName.split("/").map(encodeURIComponent).join("/");
   const response = await fetch(`${config.supabaseUrl}/storage/v1/object/${config.bucket}/${objectPath}`, {
     method: "POST",
