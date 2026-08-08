@@ -10,6 +10,7 @@ main { width:min(520px,calc(100% - 32px)); margin:8vh auto 60px; }
 .eyebrow { margin:0 0 18px; color:var(--sage); text-transform:uppercase; letter-spacing:.28em; font-size:10px; font-weight:600; }
 h1 { margin:0; font:400 clamp(48px,8vw,72px)/.95 "Italiana",serif; letter-spacing:-.03em; }
 .intro { margin:24px auto 30px; color:#6d766f; line-height:1.7; }
+.account-link{margin:20px 0 0;color:#6d766f;font-size:13px}.account-link a{color:var(--ink);font-weight:600}
 .tabs { display:grid; grid-template-columns:1fr 1fr; margin-bottom:18px; border-bottom:1px solid var(--line); }.tabs button{padding:13px;border:0;background:transparent;color:#7b837d;cursor:pointer}.tabs .active{color:var(--ink);border-bottom:2px solid var(--ink)}
 form { display:grid; gap:16px; text-align:left; }label,legend{font-size:12px;font-weight:600}input,textarea{display:block;width:100%;margin-top:7px;padding:14px;border:1px solid var(--line);background:white;color:var(--ink)}
 fieldset{margin:0;padding:14px;border:1px solid var(--line)}.choice{display:flex;align-items:center;gap:9px;margin-top:12px;font-weight:400}.choice input{width:auto;margin:0}.counts{display:grid;grid-template-columns:1fr 1fr;gap:14px}

@@ -2,6 +2,6 @@
   "name": "our-wedding-memories",
   "private": true,
   "scripts": {
-    "build": "mkdir -p dist/server && cp index.html admin.html rsvp.html styles.css gallery.css rsvp.css script.js gallery.js rsvp.js dist/ && cp -r public dist/ && cp server/index.js dist/server/ && if [ -f config.js ]; then cp config.js dist/; else cp config.example.js dist/config.js; fi && if [ -f .openai/hosting.json ]; then mkdir -p dist/.openai && cp .openai/hosting.json dist/.openai/; fi"
+    "build": "mkdir -p dist/server && cp index.html admin.html rsvp.html login.html styles.css gallery.css rsvp.css script.js gallery.js rsvp.js login.js dist/ && cp -r public dist/ && cp server/index.js dist/server/ && if [ -f config.js ]; then cp config.js dist/; else cp config.example.js dist/config.js; fi && if [ -f .openai/hosting.json ]; then mkdir -p dist/.openai && cp .openai/hosting.json dist/.openai/; fi"
   }
 }
