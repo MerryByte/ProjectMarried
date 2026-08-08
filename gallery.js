@@ -24,6 +24,8 @@ let galleryPhotos = [];
 let activePhotoIndex = 0;
 let activeConfig;
 let activeToken;
+let activeSession;
+const ADMIN_SESSION_KEY = "weddingGallerySession";
 
 loginForm.addEventListener("submit", signIn);
 logoutButton.addEventListener("click", signOut);
@@ -39,6 +41,8 @@ photoLightbox.addEventListener("keydown", event => {
   if (event.key === "ArrowLeft") showLightboxPhoto(activePhotoIndex - 1);
   if (event.key === "ArrowRight") showLightboxPhoto(activePhotoIndex + 1);
 });
+
+restoreAdminSession();
 
 async function signIn(event) {
   event.preventDefault();
@@ -59,7 +63,7 @@ async function signIn(event) {
     const session = await response.json();
     if (!response.ok) throw new Error(session.error_description || session.msg || "Sign-in failed.");
 
-    sessionStorage.setItem("weddingGalleryToken", session.access_token);
+    saveAdminSession(session);
     loginForm.password.value = "";
     await showGallery(config, session.access_token);
   } catch (error) {
@@ -199,7 +203,9 @@ function closeLightbox() {
 
 function signOut() {
   if (photoLightbox.open) closeLightbox();
-  sessionStorage.removeItem("weddingGalleryToken");
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+  activeSession = undefined;
+  activeToken = undefined;
   objectUrls.forEach(URL.revokeObjectURL);
   objectUrls = [];
   galleryPhotos = [];
@@ -210,6 +216,40 @@ function signOut() {
   logoutButton.hidden = true;
   loginSection.hidden = false;
   loginStatus.textContent = "";
+}
+
+function saveAdminSession(session) {
+  activeSession = session;
+  activeToken = session.access_token;
+  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+}
+
+async function restoreAdminSession() {
+  const stored = localStorage.getItem(ADMIN_SESSION_KEY);
+  if (!stored) return;
+  try {
+    activeConfig = await getConfig();
+    activeSession = JSON.parse(stored);
+    if (!activeSession.refresh_token) throw new Error("Saved session is incomplete.");
+    if (!activeSession.expires_at || activeSession.expires_at * 1000 <= Date.now() + 60000) {
+      const response = await fetch(`${activeConfig.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: "POST",
+        headers: { apikey: activeConfig.anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: activeSession.refresh_token }),
+      });
+      const refreshed = await response.json();
+      if (!response.ok) throw new Error(refreshed.error_description || refreshed.message || "Session expired.");
+      saveAdminSession(refreshed);
+    } else {
+      activeToken = activeSession.access_token;
+    }
+    await showGallery(activeConfig, activeToken);
+  } catch (error) {
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    activeSession = undefined;
+    activeToken = undefined;
+    loginStatus.textContent = "Your session expired. Please sign in again.";
+  }
 }
 
 async function getConfig() {
