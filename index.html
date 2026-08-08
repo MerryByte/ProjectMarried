@@ -51,8 +51,8 @@
         </button>
       </div>
 
-      <input id="uploadInput" type="file" accept="image/*,video/*" multiple hidden>
-      <input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
+      <input id="uploadInput" type="file" accept="image/*" multiple hidden>
+      <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
 
       <div class="selection" id="selection" hidden>
         <span>✓</span>
@@ -62,8 +62,13 @@
         </div>
         <button id="clearButton">Clear</button>
       </div>
+
+      <button class="submit" id="submitButton" type="button" hidden>Upload memories</button>
+      <p class="upload-status" id="uploadStatus" role="status" aria-live="polite"></p>
+      <p class="privacy">Photos are uploaded privately and can only be viewed by Anatoliy and Elizabeth.</p>
     </section>
   </main>
+  <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

@@ -51,6 +51,13 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 .selection strong, .selection small { display: block; }
 .selection small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #687269; margin-top: 3px; }
 .selection button { border: 0; background: transparent; color: var(--sage); cursor: pointer; text-decoration: underline; }
+.submit { margin-top: 18px; width: min(734px, 100%); min-height: 58px; border: 1px solid var(--ink); background: var(--ink); color: white; font: 600 13px "DM Sans", sans-serif; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; transition: .2s ease; }
+.submit:hover { background: var(--sage); border-color: var(--sage); }
+.submit:disabled { cursor: wait; opacity: .6; }
+.submit[hidden] { display: none; }
+.upload-status { min-height: 22px; margin: 16px 0 0; color: var(--sage); font-size: 13px; }
+.upload-status.success { color: #37623f; }
+.upload-status.error { color: #a13d35; }
 .privacy { margin-top: 28px; color: #899088; font-size: 11px; }
 
 @media (max-width: 680px) {
