@@ -125,6 +125,14 @@ async function discoverPhotos(config, token) {
           .filter(isImageFile)
           .map(file => ({ ...file, uploaderId: topFolder.name, path: `guest/${topFolder.name}/${dateFolder.name}/${file.name}` })));
       }
+    } else if (topFolder.name === "anonymous") {
+      const dateFolders = (await listFolder(config, token, "guest/anonymous")).filter(item => !item.id);
+      for (const dateFolder of dateFolders) {
+        const files = await listFolder(config, token, `guest/anonymous/${dateFolder.name}`);
+        photos.push(...files
+          .filter(isImageFile)
+          .map(file => ({ ...file, uploaderId: null, path: `guest/anonymous/${dateFolder.name}/${file.name}` })));
+      }
     } else {
       const files = await listFolder(config, token, `guest/${topFolder.name}`);
       photos.push(...files
