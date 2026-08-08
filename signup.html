@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account | Anatoliy & Elizabeth</title>
+  <meta name="description" content="Create an account for your household wedding reservation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="rsvp.css">
+</head>
+<body>
+  <header><a class="monogram" href="index.html">A <i>&</i> L</a></header>
+  <main>
+    <section class="card">
+      <p class="eyebrow">December 14, 2026</p>
+      <h1>Create your account</h1>
+      <p class="intro">Create one account for your household, then complete your RSVP.</p>
+      <form id="signupForm">
+        <label>Email<input id="email" type="email" autocomplete="username" required></label>
+        <label>Password<input id="password" type="password" minlength="8" autocomplete="new-password" required></label>
+        <button id="signupSubmit" type="submit">Create account</button>
+      </form>
+      <p class="status" id="signupStatus" role="status" aria-live="polite"></p>
+      <p class="account-link">Already have an account? <a href="login.html">Log in</a></p>
+    </section>
+  </main>
+  <script src="config.js"></script>
+  <script src="signup.js?v=1"></script>
+</body>
+</html>
