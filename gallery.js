@@ -13,7 +13,15 @@ const reservationsSection = document.querySelector("#reservationsSection");
 const reservationStatus = document.querySelector("#reservationStatus");
 const reservationRows = document.querySelector("#reservationRows");
 const reservationTotals = document.querySelector("#reservationTotals");
+const photoLightbox = document.querySelector("#photoLightbox");
+const lightboxImage = document.querySelector("#lightboxImage");
+const lightboxCaption = document.querySelector("#lightboxCaption");
+const lightboxClose = document.querySelector("#lightboxClose");
+const lightboxPrevious = document.querySelector("#lightboxPrevious");
+const lightboxNext = document.querySelector("#lightboxNext");
 let objectUrls = [];
+let galleryPhotos = [];
+let activePhotoIndex = 0;
 let activeConfig;
 let activeToken;
 
@@ -21,6 +29,16 @@ loginForm.addEventListener("submit", signIn);
 logoutButton.addEventListener("click", signOut);
 photosTab.addEventListener("click", () => switchView("photos"));
 reservationsTab.addEventListener("click", () => switchView("reservations"));
+lightboxClose.addEventListener("click", closeLightbox);
+lightboxPrevious.addEventListener("click", () => showLightboxPhoto(activePhotoIndex - 1));
+lightboxNext.addEventListener("click", () => showLightboxPhoto(activePhotoIndex + 1));
+photoLightbox.addEventListener("click", event => {
+  if (event.target === photoLightbox) closeLightbox();
+});
+photoLightbox.addEventListener("keydown", event => {
+  if (event.key === "ArrowLeft") showLightboxPhoto(activePhotoIndex - 1);
+  if (event.key === "ArrowRight") showLightboxPhoto(activePhotoIndex + 1);
+});
 
 async function signIn(event) {
   event.preventDefault();
@@ -70,6 +88,7 @@ async function showGallery(config, token) {
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     photoGrid.replaceChildren();
+    galleryPhotos = [];
     photoCount.textContent = `${photos.length} ${photos.length === 1 ? "photo" : "photos"}`;
     galleryStatus.textContent = photos.length ? "" : "No photos have been uploaded yet.";
 
@@ -136,24 +155,54 @@ async function addPhoto(config, token, photo) {
 
   const objectUrl = URL.createObjectURL(await response.blob());
   objectUrls.push(objectUrl);
+  galleryPhotos.push({ objectUrl, name: photo.name });
+  const photoIndex = galleryPhotos.length - 1;
   const card = document.createElement("article");
   card.className = "photo";
+  const viewButton = document.createElement("button");
+  viewButton.className = "photo-view";
+  viewButton.type = "button";
+  viewButton.setAttribute("aria-label", "View photo full size");
   const image = document.createElement("img");
   image.src = objectUrl;
   image.alt = "Guest wedding memory";
   image.loading = "lazy";
+  viewButton.addEventListener("click", () => openLightbox(photoIndex));
   const download = document.createElement("a");
   download.href = objectUrl;
   download.download = photo.name;
   download.textContent = "Download";
-  card.append(image, download);
+  viewButton.append(image);
+  card.append(viewButton, download);
   photoGrid.append(card);
 }
 
+function openLightbox(index) {
+  showLightboxPhoto(index);
+  photoLightbox.showModal();
+}
+
+function showLightboxPhoto(index) {
+  if (!galleryPhotos.length) return;
+  activePhotoIndex = (index + galleryPhotos.length) % galleryPhotos.length;
+  const photo = galleryPhotos[activePhotoIndex];
+  lightboxImage.src = photo.objectUrl;
+  lightboxCaption.textContent = `${activePhotoIndex + 1} of ${galleryPhotos.length}`;
+  const hasMultiplePhotos = galleryPhotos.length > 1;
+  lightboxPrevious.hidden = !hasMultiplePhotos;
+  lightboxNext.hidden = !hasMultiplePhotos;
+}
+
+function closeLightbox() {
+  photoLightbox.close();
+}
+
 function signOut() {
+  if (photoLightbox.open) closeLightbox();
   sessionStorage.removeItem("weddingGalleryToken");
   objectUrls.forEach(URL.revokeObjectURL);
   objectUrls = [];
+  galleryPhotos = [];
   photoGrid.replaceChildren();
   gallerySection.hidden = true;
   reservationsSection.hidden = true;
