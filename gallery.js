@@ -91,7 +91,7 @@ async function switchView(view) {
 
 async function loadReservations() {
   reservationStatus.textContent = "Loading reservations…";
-  const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/rsvps?select=family_name,attending,adult_count,child_count,notes,created_at&order=created_at.desc`, {
+  const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/rsvps?select=family_name,contact_email,attending,adult_count,child_count,notes,created_at&order=created_at.desc`, {
     headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}` },
   });
   const rows = await response.json();
@@ -109,8 +109,8 @@ async function loadReservations() {
   }));
   reservationRows.replaceChildren(...rows.map(row => {
     const tr=document.createElement("tr");
-    const values=[row.family_name,row.attending?"Attending":"Declined",row.adult_count,row.child_count,row.adult_count+row.child_count,row.notes||"—",new Date(row.created_at).toLocaleDateString()];
-    values.forEach((value,index) => { const td=document.createElement("td"); td.textContent=value; if(index===1)td.className=row.attending?"yes":"no"; if(index===5)td.className="notes"; tr.append(td); });
+    const values=[row.family_name,row.contact_email,row.attending?"Attending":"Declined",row.adult_count,row.child_count,row.adult_count+row.child_count,row.notes||"—",new Date(row.created_at).toLocaleDateString()];
+    values.forEach((value,index) => { const td=document.createElement("td"); td.textContent=value; if(index===2)td.className=row.attending?"yes":"no"; if(index===6)td.className="notes"; tr.append(td); });
     return tr;
   }));
   reservationStatus.textContent = rows.length ? "" : "No reservations have been submitted yet.";
