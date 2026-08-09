@@ -22,7 +22,12 @@ a { color: inherit; }
 .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,22,15,.58), rgba(10,22,15,.12) 65%), linear-gradient(0deg, rgba(8,19,12,.38), transparent 50%); }
 nav { position: absolute; z-index: 2; inset: 0 0 auto; height: 96px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.25); }
 nav a { text-decoration: none; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; }
-.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-links {
+display: flex; 
+align-items: center; 
+gap: 28px; 
+background: pink; 
+}
 .monogram { font: 22px "Italiana", serif; letter-spacing: .08em; }
 .monogram i { font-size: 14px; }
 .hero-copy { position: relative; z-index: 1; text-align: center; padding: 100px 24px 20px; }
