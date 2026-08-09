@@ -26,7 +26,6 @@ nav a { text-decoration: none; text-transform: uppercase; letter-spacing: .16em;
 display: flex; 
 align-items: center; 
 gap: 28px; 
-background: pink; 
 }
 .monogram { font: 22px "Italiana", serif; letter-spacing: .08em; }
 .monogram i { font-size: 14px; }
