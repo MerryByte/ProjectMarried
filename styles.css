@@ -21,7 +21,7 @@ a { color: inherit; }
 
 .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,22,15,.58), rgba(10,22,15,.12) 65%), linear-gradient(0deg, rgba(8,19,12,.38), transparent 50%); }
 nav { 
-position: absolute; background: red; z-index: 2; inset: 0 0 auto; height: 96px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.25); }
+position: absolute; z-index: 2; inset: 0 0 auto; height: 96px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.25); }
 nav a { text-decoration: none; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; }
 .nav-links {
 display: flex; 
