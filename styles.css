@@ -20,19 +20,20 @@ a { color: inherit; }
 }
 
 .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,22,15,.58), rgba(10,22,15,.12) 65%), linear-gradient(0deg, rgba(8,19,12,.38), transparent 50%); }
-nav { 
-position: absolute; z-index: 2; inset: 0 0 auto; height: 96px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.25); }
+nav {
+position: fixed; z-index: 30; inset: 0 0 auto; height: 96px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.22); background: rgba(20,35,25,.72); -webkit-backdrop-filter: blur(16px) saturate(130%); backdrop-filter: blur(16px) saturate(130%); box-shadow: 0 8px 30px rgba(7,18,11,.14); }
 nav a { text-decoration: none; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; }
 .nav-links {
 display: flex; 
 align-items: center; 
 gap: 28px; 
 }
-.monogram { font: 22px "Italiana", serif; letter-spacing: .08em; }
+.monogram { font: 600 25px "Cormorant Garamond", serif; letter-spacing: .1em; }
 .monogram i { font-size: 14px; }
 .hero-copy { position: relative; z-index: 1; text-align: center; padding: 100px 24px 20px; }
 .eyebrow { margin: 0 0 24px; text-transform: uppercase; letter-spacing: .32em; font-size: 11px; font-weight: 600; }
 h1, h2 { margin: 0; font: 400 clamp(62px, 10vw, 150px)/.87 "Italiana", serif; letter-spacing: -.04em; }
+.hero h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; letter-spacing: -.035em; }
 h1 em { font-weight: 400; font-size: .66em; }
 .date { margin: 34px 0 0; font-size: 11px; letter-spacing: .3em; }
 .scroll { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 100px; text-decoration: none; text-transform: uppercase; letter-spacing: .2em; font-size: 9px; }
