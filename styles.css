@@ -50,6 +50,8 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 .actions strong, .actions small { display: block; }
 .actions strong { font: 18px "Italiana", serif; margin-bottom: 6px; }
 .actions small { color: #7c857e; }
+.auto-upload-note { display: flex; align-items: center; gap: 8px; margin: 18px 0 0; color: var(--sage); font-size: 12px; }
+.auto-upload-note span { display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; color: white; background: var(--sage); font-size: 11px; }
 .icon { width: 48px; height: 48px; border-radius: 50%; background: #e1e6dd; display: grid; place-items: center; font-size: 24px; }
 .selection { width: min(734px, 100%); margin-top: 18px; padding: 16px 18px; background: #e5ebe2; display: flex; align-items: center; gap: 14px; text-align: left; }
 .selection[hidden] { display: none; }
