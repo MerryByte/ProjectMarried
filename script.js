@@ -25,6 +25,9 @@ const cameraZoomControl = document.querySelector("#cameraZoomControl");
 const cameraZoom = document.querySelector("#cameraZoom");
 const cameraZoomValue = document.querySelector("#cameraZoomValue");
 const recordingDuration = document.querySelector("#recordingDuration");
+const captureFeedback = document.querySelector("#captureFeedback");
+const captureFeedbackText = document.querySelector("#captureFeedbackText");
+const saveCaptureButton = document.querySelector("#saveCaptureButton");
 let selectedFiles = [];
 let uploadsUnlocked = false;
 let unlockMessage = "Photo sharing is not open yet.";
@@ -38,6 +41,8 @@ let recordingStartedAt;
 let discardRecording = false;
 let pinchStartDistance;
 let pinchStartZoom;
+let lastCapturedFile;
+let captureFeedbackTimer;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const MAX_FILES_PER_BATCH = 20;
@@ -57,6 +62,7 @@ cameraZoom.addEventListener("input", applyCameraZoom);
 cameraPreview.addEventListener("touchstart", startCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchmove", moveCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchend", endCameraPinch);
+saveCaptureButton.addEventListener("click", saveLastCapture);
 cameraRecorder.addEventListener("cancel", event => { event.preventDefault(); closeHighQualityCamera(); });
 window.addEventListener("pagehide", stopCameraStream);
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
@@ -271,10 +277,13 @@ async function takeHighResolutionPhoto() {
     return;
   }
   const file = new File([blob], `wedding-${Date.now()}.jpg`, { type: "image/jpeg" });
+  setLastCapturedFile(file);
+  showCaptureFeedback("Photo taken · Uploading…", true);
   cameraResolution.textContent = "Photo captured · Uploading automatically…";
   const uploaded = await uploadCapturedFile(file);
   if (cameraStream) {
     cameraResolution.textContent = uploaded ? "Photo uploaded · Ready for another" : "Upload failed · Photo kept for retry";
+    showCaptureFeedback(uploaded ? "Photo taken and uploaded" : "Photo taken · Upload failed");
     setTimeout(() => { if (cameraStream) cameraResolution.textContent = readyMessage; }, 1600);
   }
   takePhotoButton.disabled = false;
@@ -325,12 +334,54 @@ async function finishHighResolutionVideo() {
   const blob = new Blob(recordedChunks, { type });
   const extension = type.includes("mp4") ? "mp4" : "webm";
   const file = new File([blob], `wedding-${Date.now()}.${extension}`, { type });
-  closeHighQualityCamera();
+  recordVideoButton.hidden = false;
+  takePhotoButton.hidden = false;
+  stopVideoButton.hidden = true;
+  recordingDuration.hidden = true;
+  setLastCapturedFile(file);
+  showCaptureFeedback("Video captured · Uploading…", true);
   if (file.size > MAX_VIDEO_SIZE) {
     setStatus("The recording exceeded 50 MB. Please record a shorter video.", "error");
+    showCaptureFeedback("Video saved · Too large to upload");
     return;
   }
-  await uploadCapturedFile(file);
+  const uploaded = await uploadCapturedFile(file);
+  if (cameraStream) showCaptureFeedback(uploaded ? "Video captured and uploaded" : "Video captured · Upload failed");
+}
+
+function setLastCapturedFile(file) {
+  lastCapturedFile = file;
+  saveCaptureButton.hidden = false;
+}
+
+function showCaptureFeedback(message, flash = false) {
+  clearTimeout(captureFeedbackTimer);
+  captureFeedbackText.textContent = message;
+  captureFeedback.hidden = false;
+  if (flash) {
+    cameraRecorder.classList.remove("flash");
+    void cameraRecorder.offsetWidth;
+    cameraRecorder.classList.add("flash");
+  }
+  captureFeedbackTimer = setTimeout(() => { captureFeedback.hidden = true; }, 2200);
+}
+
+async function saveLastCapture() {
+  if (!lastCapturedFile) return;
+  try {
+    if (navigator.canShare?.({ files: [lastCapturedFile] })) {
+      await navigator.share({ files: [lastCapturedFile], title: "Wedding memory" });
+      return;
+    }
+  } catch (error) {
+    if (error.name === "AbortError") return;
+  }
+  const url = URL.createObjectURL(lastCapturedFile);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = lastCapturedFile.name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function uploadCapturedFile(file) {
@@ -353,6 +404,8 @@ function closeHighQualityCamera() {
   stopVideoButton.hidden = true;
   takePhotoButton.disabled = false;
   recordingDuration.hidden = true;
+  captureFeedback.hidden = true;
+  clearTimeout(captureFeedbackTimer);
   cameraZoomControl.hidden = true;
   if (cameraRecorder.open) cameraRecorder.close();
 }
