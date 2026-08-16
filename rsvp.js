@@ -27,7 +27,13 @@ function saveSession(value) {
 }
 
 async function restoreSession() {
-  const stored = localStorage.getItem(RSVP_SESSION_KEY);
+  let stored = null;
+  try {
+    stored = localStorage.getItem(RSVP_SESSION_KEY);
+  } catch {
+    window.location.href = location.hash === "#photos" ? "login.html?photos=1" : "login.html?rsvp=1";
+    return;
+  }
   if (!stored) {
     window.location.replace(location.hash === "#photos" ? "login.html?photos=1" : "login.html?rsvp=1");
     return;

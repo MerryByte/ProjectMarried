@@ -449,7 +449,7 @@ async function initializeUploadGate() {
     console.warn("Using the default upload date.", error);
   }
 
-  const unlockDate = new Date(unlockAt);
+  const unlockDate = parseSiteDate(unlockAt);
   uploadsUnlocked = Number.isFinite(unlockDate.getTime()) && Date.now() >= unlockDate.getTime();
   uploadGate.classList.toggle("locked", !uploadsUnlocked);
   uploadLock.hidden = uploadsUnlocked;
@@ -468,9 +468,16 @@ async function initializeSchedule() {
       headers: { apikey: config.anonKey },
       cache: "no-store",
     });
-    const rows = await response.json();
-    if (!response.ok || !rows[0]) return;
-    const weddingDate = new Date(rows[0].upload_unlock_at);
+    let rows = await response.json();
+    if (!response.ok || !rows[0]) {
+      const fallback = await fetch(`${config.supabaseUrl}/rest/v1/site_settings?select=upload_unlock_at&id=eq.wedding&limit=1`, {
+        headers: { apikey: config.anonKey },
+        cache: "no-store",
+      });
+      rows = await fallback.json();
+      if (!fallback.ok || !rows[0]) return;
+    }
+    const weddingDate = parseSiteDate(rows[0].upload_unlock_at);
     if (Number.isFinite(weddingDate.getTime())) {
       const options = { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric" };
       document.querySelector("#weddingDateShort").textContent = new Intl.DateTimeFormat("en-US", options).format(weddingDate);
@@ -485,6 +492,12 @@ async function initializeSchedule() {
   } catch (error) {
     console.warn("Using default schedule details.", error);
   }
+}
+
+function parseSiteDate(value) {
+  if (value instanceof Date) return value;
+  const normalized = String(value || "").trim().replace(" ", "T");
+  return new Date(normalized);
 }
 
 function formatScheduleTime(value) {
