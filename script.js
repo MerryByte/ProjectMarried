@@ -27,6 +27,9 @@ const cameraZoomValue = document.querySelector("#cameraZoomValue");
 const recordingDuration = document.querySelector("#recordingDuration");
 const captureFeedback = document.querySelector("#captureFeedback");
 const captureFeedbackText = document.querySelector("#captureFeedbackText");
+const captureFeedbackIcon = document.querySelector("#captureFeedbackIcon");
+const captureProgress = document.querySelector("#captureProgress");
+const captureProgressText = document.querySelector("#captureProgressText");
 const saveCaptureButton = document.querySelector("#saveCaptureButton");
 let selectedFiles = [];
 let uploadsUnlocked = false;
@@ -134,7 +137,7 @@ function showFiles() {
   selectionNames.textContent = selectedFiles.map(file => file.name).join(", ");
 }
 
-async function uploadFiles(files = selectedFiles) {
+async function uploadFiles(files = selectedFiles, onProgress) {
   if (!files.length || !uploadsUnlocked) return;
 
   submitButton.disabled = true;
@@ -147,7 +150,10 @@ async function uploadFiles(files = selectedFiles) {
 
     for (let index = 0; index < filesToUpload.length; index += 1) {
       const label = `Uploading ${index + 1} of ${filesToUpload.length}${uploader.familyName ? ` as ${uploader.familyName}` : ""}`;
-      await uploadFile(filesToUpload[index], config, uploader, percent => setStatus(`${label} · ${percent}%`));
+      await uploadFile(filesToUpload[index], config, uploader, percent => {
+        setStatus(`${label} · ${percent}%`);
+        onProgress?.(percent, index, filesToUpload.length);
+      });
       uploadedFiles.push(filesToUpload[index]);
     }
 
@@ -278,12 +284,10 @@ async function takeHighResolutionPhoto() {
   }
   const file = new File([blob], `wedding-${Date.now()}.jpg`, { type: "image/jpeg" });
   setLastCapturedFile(file);
-  showCaptureFeedback("Photo taken · Uploading…", true);
   cameraResolution.textContent = "Photo captured · Uploading automatically…";
-  const uploaded = await uploadCapturedFile(file);
+  const uploaded = await uploadCapturedFile(file, "Photo");
   if (cameraStream) {
     cameraResolution.textContent = uploaded ? "Photo uploaded · Ready for another" : "Upload failed · Photo kept for retry";
-    showCaptureFeedback(uploaded ? "Photo taken and uploaded" : "Photo taken · Upload failed");
     setTimeout(() => { if (cameraStream) cameraResolution.textContent = readyMessage; }, 1600);
   }
   takePhotoButton.disabled = false;
@@ -339,14 +343,12 @@ async function finishHighResolutionVideo() {
   stopVideoButton.hidden = true;
   recordingDuration.hidden = true;
   setLastCapturedFile(file);
-  showCaptureFeedback("Video captured · Uploading…", true);
   if (file.size > MAX_VIDEO_SIZE) {
     setStatus("The recording exceeded 50 MB. Please record a shorter video.", "error");
-    showCaptureFeedback("Video saved · Too large to upload");
+    showCaptureFeedback("Video saved · Too large to upload", true, 0, true);
     return;
   }
-  const uploaded = await uploadCapturedFile(file);
-  if (cameraStream) showCaptureFeedback(uploaded ? "Video captured and uploaded" : "Video captured · Upload failed");
+  await uploadCapturedFile(file, "Video");
 }
 
 function setLastCapturedFile(file) {
@@ -354,16 +356,19 @@ function setLastCapturedFile(file) {
   saveCaptureButton.hidden = false;
 }
 
-function showCaptureFeedback(message, flash = false) {
+function showCaptureFeedback(message, flash = false, percent = 0, autoHide = false) {
   clearTimeout(captureFeedbackTimer);
   captureFeedbackText.textContent = message;
+  captureProgress.value = percent;
+  captureProgressText.textContent = `${percent}%`;
+  captureFeedbackIcon.textContent = percent === 100 ? "✓" : "↑";
   captureFeedback.hidden = false;
   if (flash) {
     cameraRecorder.classList.remove("flash");
     void cameraRecorder.offsetWidth;
     cameraRecorder.classList.add("flash");
   }
-  captureFeedbackTimer = setTimeout(() => { captureFeedback.hidden = true; }, 2200);
+  if (autoHide) captureFeedbackTimer = setTimeout(() => { captureFeedback.hidden = true; }, 2200);
 }
 
 async function saveLastCapture() {
@@ -384,11 +389,14 @@ async function saveLastCapture() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-async function uploadCapturedFile(file) {
+async function uploadCapturedFile(file, typeLabel) {
   selectedFiles.push(file);
   showFiles();
-  await uploadFiles([file]);
-  return !selectedFiles.includes(file);
+  showCaptureFeedback(`${typeLabel} taken · Uploading`, true, 0);
+  await uploadFiles([file], percent => showCaptureFeedback(`${typeLabel} taken · Uploading`, false, percent));
+  const uploaded = !selectedFiles.includes(file);
+  showCaptureFeedback(uploaded ? `${typeLabel} uploaded` : `${typeLabel} taken · Upload failed`, false, uploaded ? 100 : captureProgress.value, true);
+  return uploaded;
 }
 
 function closeHighQualityCamera() {
