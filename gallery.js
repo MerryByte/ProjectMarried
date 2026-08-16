@@ -104,8 +104,8 @@ async function showGallery(config, token) {
 
     photoGrid.replaceChildren();
     galleryPhotos = [];
-    photoCount.textContent = `${photos.length} ${photos.length === 1 ? "photo" : "photos"}`;
-    galleryStatus.textContent = photos.length ? "" : "No photos have been uploaded yet.";
+    photoCount.textContent = `${photos.length} ${photos.length === 1 ? "memory" : "memories"}`;
+    galleryStatus.textContent = photos.length ? "" : "No photos or videos have been uploaded yet.";
 
     thumbnailObserver?.disconnect();
     thumbnailObserver = new IntersectionObserver(entries => {
@@ -143,7 +143,7 @@ async function discoverPhotos(config, token) {
       for (const dateFolder of dateFolders) {
         const files = await listFolder(config, token, `guest/${topFolder.name}/${dateFolder.name}`);
         photos.push(...files
-          .filter(isImageFile)
+          .filter(isMediaFile)
           .map(file => ({ ...file, uploaderId: topFolder.name, path: `guest/${topFolder.name}/${dateFolder.name}/${file.name}` })));
       }
     } else if (topFolder.name === "anonymous") {
@@ -151,13 +151,13 @@ async function discoverPhotos(config, token) {
       for (const dateFolder of dateFolders) {
         const files = await listFolder(config, token, `guest/anonymous/${dateFolder.name}`);
         photos.push(...files
-          .filter(isImageFile)
+          .filter(isMediaFile)
           .map(file => ({ ...file, uploaderId: null, path: `guest/anonymous/${dateFolder.name}/${file.name}` })));
       }
     } else {
       const files = await listFolder(config, token, `guest/${topFolder.name}`);
       photos.push(...files
-        .filter(isImageFile)
+        .filter(isMediaFile)
         .map(file => ({ ...file, uploaderId: null, path: `guest/${topFolder.name}/${file.name}` })));
     }
   }
@@ -169,8 +169,8 @@ function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-function isImageFile(file) {
-  return file.id && file.metadata?.mimetype?.startsWith("image/");
+function isMediaFile(file) {
+  return file.id && /^(image|video)\//.test(file.metadata?.mimetype || "");
 }
 
 async function switchView(view) {
@@ -280,28 +280,39 @@ async function listFolder(config, token, prefix) {
 function addPhoto(config, token, photo, familyName) {
   const card = document.createElement("article");
   card.className = "photo";
-  const viewButton = document.createElement("button");
-  viewButton.className = "photo-view";
-  viewButton.type = "button";
-  viewButton.setAttribute("aria-label", "View photo full size");
-  const image = document.createElement("img");
-  image.alt = "Guest wedding memory";
-  image.loading = "lazy";
-  image.decoding = "async";
+  const isVideo = photo.metadata?.mimetype?.startsWith("video/");
+  const media = document.createElement(isVideo ? "video" : "img");
+  if (isVideo) {
+    media.controls = true;
+    media.preload = "metadata";
+    media.playsInline = true;
+  } else {
+    media.alt = "Guest wedding memory";
+    media.loading = "lazy";
+    media.decoding = "async";
+  }
   const download = document.createElement("a");
   download.href = "#";
   download.textContent = "Download";
-  const photoIndex = galleryPhotos.push({ config, token, photo, familyName, image, thumbnailUrl: null, fullUrl: null, previewPromise: null, fullPromise: null }) - 1;
-  image.dataset.photoIndex = photoIndex;
-  viewButton.addEventListener("click", () => openLightbox(photoIndex));
+  const photoIndex = galleryPhotos.push({ config, token, photo, familyName, media, thumbnailUrl: null, fullUrl: null, previewPromise: null, fullPromise: null }) - 1;
+  media.dataset.photoIndex = photoIndex;
   download.addEventListener("click", event => downloadPhoto(event, photoIndex));
   const uploader = document.createElement("p");
   uploader.className = "photo-uploader";
   uploader.textContent = familyName;
-  viewButton.append(image);
-  card.append(viewButton, download, uploader);
+  if (isVideo) {
+    card.append(media, download, uploader);
+  } else {
+    const viewButton = document.createElement("button");
+    viewButton.className = "photo-view";
+    viewButton.type = "button";
+    viewButton.setAttribute("aria-label", "View photo full size");
+    viewButton.addEventListener("click", () => openLightbox(photoIndex));
+    viewButton.append(media);
+    card.append(viewButton, download, uploader);
+  }
   photoGrid.append(card);
-  thumbnailObserver.observe(image);
+  thumbnailObserver.observe(media);
 }
 
 async function loadPhotoPreview(index) {
@@ -312,8 +323,11 @@ async function loadPhotoPreview(index) {
   entry.previewPromise = (async () => {
     const path = entry.photo.path.split("/").map(encodeURIComponent).join("/");
     const headers = { apikey: entry.config.anonKey, Authorization: `Bearer ${entry.token}` };
-    let response = await fetch(`${entry.config.supabaseUrl}/storage/v1/render/image/authenticated/${entry.config.bucket}/${path}?width=640&height=640&resize=cover&quality=70`, { headers });
-    let isFullSize = false;
+    const isVideo = entry.photo.metadata?.mimetype?.startsWith("video/");
+    let response = isVideo
+      ? await fetch(`${entry.config.supabaseUrl}/storage/v1/object/authenticated/${entry.config.bucket}/${path}`, { headers })
+      : await fetch(`${entry.config.supabaseUrl}/storage/v1/render/image/authenticated/${entry.config.bucket}/${path}?width=640&height=640&resize=cover&quality=70`, { headers });
+    let isFullSize = isVideo;
 
     if (!response.ok) {
       response = await fetch(`${entry.config.supabaseUrl}/storage/v1/object/authenticated/${entry.config.bucket}/${path}`, { headers });
@@ -325,11 +339,11 @@ async function loadPhotoPreview(index) {
     objectUrls.push(objectUrl);
     entry.thumbnailUrl = objectUrl;
     if (isFullSize) entry.fullUrl = objectUrl;
-    entry.image.addEventListener("load", () => entry.image.classList.add("loaded"), { once: true });
-    entry.image.src = objectUrl;
+    entry.media.addEventListener(isVideo ? "loadeddata" : "load", () => entry.media.classList.add("loaded"), { once: true });
+    entry.media.src = objectUrl;
     return objectUrl;
   })().catch(error => {
-    entry.image.alt = "Photo could not be loaded";
+    if (entry.media.tagName === "IMG") entry.media.alt = "Media could not be loaded";
     console.error(error);
   });
 

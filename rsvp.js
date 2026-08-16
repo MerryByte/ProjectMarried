@@ -89,22 +89,22 @@ async function switchSection(section) {
 
 async function loadMyPhotos() {
   photosLoaded = true;
-  myPhotosStatus.textContent = "Loading your photos…";
+  myPhotosStatus.textContent = "Loading your memories…";
   try {
     const root = `guest/${session.user.id}`;
     const dateFolders = (await listStorageFolder(root)).filter(item => !item.id);
     const files = [];
     for (const folder of dateFolders) {
       const items = await listStorageFolder(`${root}/${folder.name}`);
-      files.push(...items.filter(item => item.id && item.metadata?.mimetype?.startsWith("image/")).map(item => ({ ...item, path: `${root}/${folder.name}/${item.name}` })));
+      files.push(...items.filter(item => item.id && /^(image|video)\//.test(item.metadata?.mimetype || "")).map(item => ({ ...item, path: `${root}/${folder.name}/${item.name}` })));
     }
     files.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     myPhotosGrid.replaceChildren();
     if (!files.length) {
-      myPhotosStatus.textContent = "You have not uploaded any signed-in photos yet.";
+      myPhotosStatus.textContent = "You have not uploaded any signed-in photos or videos yet.";
       return;
     }
-    myPhotosStatus.textContent = `${files.length} ${files.length === 1 ? "photo" : "photos"}`;
+    myPhotosStatus.textContent = `${files.length} ${files.length === 1 ? "memory" : "memories"}`;
     for (const file of files) addMyPhoto(file);
   } catch (error) {
     photosLoaded = false;
@@ -119,35 +119,44 @@ async function listStorageFolder(prefix) {
     body: JSON.stringify({ prefix, limit: 1000, offset: 0, sortBy: { column: "created_at", order: "desc" } }),
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.message || result.error || "Unable to load your photos.");
+  if (!response.ok) throw new Error(result.message || result.error || "Unable to load your memories.");
   return result;
 }
 
 async function addMyPhoto(file) {
   const card = document.createElement("article");
   card.className = "my-photo";
-  const image = document.createElement("img");
-  image.alt = "Your wedding photo";
-  image.loading = "lazy";
-  image.decoding = "async";
+  const isVideo = file.metadata?.mimetype?.startsWith("video/");
+  const media = document.createElement(isVideo ? "video" : "img");
+  if (isVideo) {
+    media.controls = true;
+    media.preload = "metadata";
+    media.playsInline = true;
+  } else {
+    media.alt = "Your wedding photo";
+    media.loading = "lazy";
+    media.decoding = "async";
+  }
   const download = document.createElement("a");
   download.textContent = "Download";
   download.href = "#";
   download.addEventListener("click", event => downloadMyPhoto(event, file));
-  card.append(image, download);
+  card.append(media, download);
   myPhotosGrid.append(card);
 
   const path = file.path.split("/").map(encodeURIComponent).join("/");
   const headers = authHeaders();
-  let response = await api(`/storage/v1/render/image/authenticated/${config.bucket}/${path}?width=640&height=640&resize=cover&quality=72`, { headers });
+  let response = isVideo
+    ? await api(`/storage/v1/object/authenticated/${config.bucket}/${path}`, { headers })
+    : await api(`/storage/v1/render/image/authenticated/${config.bucket}/${path}?width=640&height=640&resize=cover&quality=72`, { headers });
   if (!response.ok) response = await api(`/storage/v1/object/authenticated/${config.bucket}/${path}`, { headers });
   if (!response.ok) {
-    image.alt = "Photo unavailable";
+    if (!isVideo) media.alt = "Media unavailable";
     return;
   }
   const url = URL.createObjectURL(await response.blob());
   photoObjectUrls.push(url);
-  image.src = url;
+  media.src = url;
 }
 
 async function downloadMyPhoto(event, file) {

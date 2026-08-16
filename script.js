@@ -18,7 +18,8 @@ let selectedFiles = [];
 let uploadsUnlocked = false;
 let unlockMessage = "Photo sharing is not open yet.";
 let toastTimer;
-const MAX_FILE_SIZE = 15 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const MAX_FILES_PER_BATCH = 20;
 const MAX_UPLOAD_ATTEMPTS = 3;
 const RSVP_SESSION_KEY = "weddingRsvpSession";
@@ -40,9 +41,13 @@ async function addFiles(event, uploadImmediately = false) {
   if (!uploadsUnlocked) return;
   const incomingFiles = [...event.target.files];
   const availableSlots = Math.max(0, MAX_FILES_PER_BATCH - selectedFiles.length);
-  const validFiles = incomingFiles.filter(file => file.type.startsWith("image/") && file.size <= MAX_FILE_SIZE).slice(0, availableSlots);
+  const validFiles = incomingFiles.filter(file => {
+    if (file.type.startsWith("image/")) return file.size <= MAX_IMAGE_SIZE;
+    if (file.type.startsWith("video/")) return file.size <= MAX_VIDEO_SIZE;
+    return false;
+  }).slice(0, availableSlots);
   const rejectedCount = incomingFiles.length - validFiles.length;
-  if (validFiles.some(file => file.size > 1.5 * 1024 * 1024)) setStatus("Optimizing photos for a faster upload…");
+  if (validFiles.some(file => file.type.startsWith("image/") && file.size > 1.5 * 1024 * 1024)) setStatus("Optimizing photos for a faster upload…");
   const optimizedFiles = await Promise.all(validFiles.map(optimizeImage));
 
   selectedFiles.push(...optimizedFiles);
@@ -50,7 +55,7 @@ async function addFiles(event, uploadImmediately = false) {
   showFiles();
 
   if (rejectedCount) {
-    setStatus(`${rejectedCount} file${rejectedCount === 1 ? " was" : "s were"} skipped. Choose up to 20 photos, 15 MB each.`, "error");
+    setStatus(`${rejectedCount} file${rejectedCount === 1 ? " was" : "s were"} skipped. Images can be 15 MB and videos 50 MB.`, "error");
   } else {
     setStatus("");
   }
@@ -61,6 +66,7 @@ async function addFiles(event, uploadImmediately = false) {
 }
 
 async function optimizeImage(file) {
+  if (!file.type.startsWith("image/")) return file;
   if (file.size <= 1.5 * 1024 * 1024 || file.type === "image/gif") return file;
   try {
     const bitmap = await createImageBitmap(file);

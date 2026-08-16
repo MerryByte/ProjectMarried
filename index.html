@@ -50,7 +50,7 @@
       <h2>Help us remember<br>every little moment.</h2>
       <p class="intro">
         The happy tears, the dance moves, the moments we missed—
-        share your photos from our day.
+        share your photos and videos from our day.
       </p>
 
       <div class="upload-gate locked" id="uploadGate">
@@ -60,20 +60,20 @@
         <div class="actions">
           <button id="uploadButton">
             <span class="icon">▧</span>
-            <span><strong>Choose from library</strong><small>Wedding photos</small></span>
+            <span><strong>Choose from library</strong><small>Photos and videos</small></span>
             <b>→</b>
           </button>
           <button id="cameraButton">
             <span class="icon">◎</span>
-            <span><strong>Open camera</strong><small>Capture a moment now</small></span>
+            <span><strong>Open camera</strong><small>Take a photo or video</small></span>
             <b>→</b>
           </button>
         </div>
-        <p class="auto-upload-note"><span aria-hidden="true">✓</span> Camera photos upload automatically after capture.</p>
+        <p class="auto-upload-note"><span aria-hidden="true">✓</span> Camera photos and videos upload automatically after capture.</p>
       </div>
 
-      <input id="uploadInput" type="file" accept="image/*" multiple hidden>
-      <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+      <input id="uploadInput" type="file" accept="image/*,video/*" multiple hidden>
+      <input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
 
       <button class="floating-camera" id="floatingCameraButton" type="button" aria-label="Open camera">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -97,10 +97,10 @@
 
       <button class="submit" id="submitButton" type="button" hidden>Upload memories</button>
       <p class="upload-status" id="uploadStatus" role="status" aria-live="polite"></p>
-      <p class="privacy">Anyone can upload without an account. If you are signed in through RSVP, your photos will be labeled with your reservation name. Photos can only be viewed by Anatoliy and Elizabeth.</p>
+      <p class="privacy">Anyone can upload without an account. If you are signed in through RSVP, your memories will be labeled with your reservation name. Uploads can only be viewed by Anatoliy and Elizabeth.</p>
     </section>
   </main>
   <script src="config.js"></script>
-  <script src="script.js?v=20"></script>
+  <script src="script.js?v=21"></script>
 </body>
 </html>
