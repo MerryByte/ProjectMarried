@@ -12,6 +12,8 @@ const uploadLock = document.querySelector("#uploadLock");
 const uploadLockMessage = document.querySelector("#uploadLockMessage");
 const uploadGate = document.querySelector("#uploadGate");
 const cameraToast = document.querySelector("#cameraToast");
+const cameraToastMessage = document.querySelector("#cameraToastMessage");
+const cameraToastClose = document.querySelector("#cameraToastClose");
 let selectedFiles = [];
 let uploadsUnlocked = false;
 let unlockMessage = "Photo and video sharing is not open yet.";
@@ -23,6 +25,7 @@ const DEFAULT_UNLOCK_AT = "2026-12-14T08:00:00.000Z";
 uploadButton.addEventListener("click", () => openPicker(uploadInput));
 cameraButton.addEventListener("click", () => openPicker(cameraInput));
 floatingCameraButton.addEventListener("click", () => openPicker(cameraInput, true));
+cameraToastClose.addEventListener("click", dismissCameraToast);
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
 initializeUploadGate();
@@ -100,10 +103,15 @@ function openPicker(input, showToast = false) {
     return;
   }
   if (!showToast) return;
-  cameraToast.textContent = unlockMessage;
+  cameraToastMessage.textContent = unlockMessage;
   cameraToast.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { cameraToast.hidden = true; }, 5000);
+  toastTimer = setTimeout(dismissCameraToast, 5000);
+}
+
+function dismissCameraToast() {
+  cameraToast.hidden = true;
+  clearTimeout(toastTimer);
 }
 
 async function initializeUploadGate() {

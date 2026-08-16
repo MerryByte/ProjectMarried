@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="public/couple-hero-centered.png" as="image" fetchpriority="high">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
   <main>
@@ -73,7 +73,10 @@
           <circle cx="12" cy="12.5" r="3.5"/>
         </svg>
       </button>
-      <div class="camera-toast" id="cameraToast" role="status" aria-live="polite" hidden></div>
+      <div class="camera-toast" id="cameraToast" role="status" aria-live="polite" hidden>
+        <span id="cameraToastMessage"></span>
+        <button id="cameraToastClose" type="button" aria-label="Dismiss message">&times;</button>
+      </div>
 
       <div class="selection" id="selection" hidden>
         <span>✓</span>
@@ -90,6 +93,6 @@
     </section>
   </main>
   <script src="config.js"></script>
-  <script src="script.js?v=15"></script>
+  <script src="script.js?v=16"></script>
 </body>
 </html>
