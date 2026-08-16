@@ -21,6 +21,9 @@ const cameraRecorderClose = document.querySelector("#cameraRecorderClose");
 const takePhotoButton = document.querySelector("#takePhotoButton");
 const recordVideoButton = document.querySelector("#recordVideoButton");
 const stopVideoButton = document.querySelector("#stopVideoButton");
+const cameraZoomControl = document.querySelector("#cameraZoomControl");
+const cameraZoom = document.querySelector("#cameraZoom");
+const cameraZoomValue = document.querySelector("#cameraZoomValue");
 let selectedFiles = [];
 let uploadsUnlocked = false;
 let unlockMessage = "Photo sharing is not open yet.";
@@ -45,6 +48,7 @@ cameraRecorderClose.addEventListener("click", closeHighQualityCamera);
 takePhotoButton.addEventListener("click", takeHighResolutionPhoto);
 recordVideoButton.addEventListener("click", startHighResolutionVideo);
 stopVideoButton.addEventListener("click", stopHighResolutionVideo);
+cameraZoom.addEventListener("input", applyCameraZoom);
 cameraRecorder.addEventListener("cancel", event => { event.preventDefault(); closeHighQualityCamera(); });
 window.addEventListener("pagehide", stopCameraStream);
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
@@ -184,13 +188,37 @@ async function openHighQualityCamera(showToast = false) {
     });
     cameraPreview.srcObject = cameraStream;
     await cameraPreview.play();
-    const settings = cameraStream.getVideoTracks()[0]?.getSettings();
+    const videoTrack = cameraStream.getVideoTracks()[0];
+    const settings = videoTrack?.getSettings();
     cameraResolution.textContent = settings?.width && settings?.height
       ? `Recording at ${settings.width} × ${settings.height}`
       : "High-quality camera ready";
+    const capabilities = videoTrack?.getCapabilities?.();
+    if (capabilities?.zoom) {
+      cameraZoom.min = capabilities.zoom.min;
+      cameraZoom.max = capabilities.zoom.max;
+      cameraZoom.step = capabilities.zoom.step || .1;
+      cameraZoom.value = settings.zoom || capabilities.zoom.min;
+      cameraZoomValue.value = `${Number(cameraZoom.value).toFixed(1)}×`;
+      cameraZoomControl.hidden = false;
+    } else {
+      cameraZoomControl.hidden = true;
+    }
   } catch (error) {
     closeHighQualityCamera();
     setStatus("High-quality camera could not open. Check camera and microphone permissions, or choose from your library.", "error");
+  }
+}
+
+async function applyCameraZoom() {
+  const track = cameraStream?.getVideoTracks()[0];
+  if (!track) return;
+  const zoom = Number(cameraZoom.value);
+  cameraZoomValue.value = `${zoom.toFixed(1)}×`;
+  try {
+    await track.applyConstraints({ advanced: [{ zoom }] });
+  } catch (error) {
+    console.warn("Camera zoom is unavailable.", error);
   }
 }
 
@@ -267,6 +295,7 @@ function closeHighQualityCamera() {
   recordVideoButton.hidden = false;
   takePhotoButton.hidden = false;
   stopVideoButton.hidden = true;
+  cameraZoomControl.hidden = true;
   if (cameraRecorder.open) cameraRecorder.close();
 }
 
