@@ -29,7 +29,7 @@ function saveSession(value) {
 async function restoreSession() {
   const stored = localStorage.getItem(RSVP_SESSION_KEY);
   if (!stored) {
-    window.location.replace("login.html?rsvp=1");
+    window.location.replace(location.hash === "#photos" ? "login.html?photos=1" : "login.html?rsvp=1");
     return;
   }
   try {
@@ -64,6 +64,7 @@ async function openAccount() {
   accountTabs.hidden = false;
   rsvpSection.hidden = false;
   logoutButton.hidden = false;
+  if (location.hash === "#photos") await switchSection("photos");
 
   const response = await api(`/rest/v1/rsvps?select=*&user_id=eq.${encodeURIComponent(session.user.id)}`, { headers: authHeaders() });
   if (!response.ok) return;

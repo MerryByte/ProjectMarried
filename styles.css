@@ -28,6 +28,8 @@ display: flex;
 align-items: center; 
 gap: 28px; 
 }
+.nav-links a + a { position:relative; }
+.nav-links a + a::before { content:""; position:absolute; left:-14px; top:50%; width:1px; height:14px; background:rgba(255,255,255,.38); transform:translateY(-50%); }
 .monogram { font: 600 25px "Cormorant Garamond", serif; letter-spacing: .1em; }
 .monogram i { font-size: 14px; }
 .hero-copy { position: relative; z-index: 1; text-align: center; padding: 100px 24px 20px; }
@@ -93,6 +95,7 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
   .nav-links { display: flex; }
   .nav-links { gap: 13px; }
   .nav-links a { font-size:9px; letter-spacing:.1em; }
+  .nav-links a + a::before { left:-7px; height:12px; }
   .hero { background-image: url("public/couple-hero-mobile.webp"); background-position: center; }
   .shade { background: linear-gradient(0deg, rgba(7,18,11,.63), rgba(7,18,11,.05) 75%); }
   .hero-copy { align-self: end; padding-bottom: 50px; }
