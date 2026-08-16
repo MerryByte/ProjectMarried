@@ -43,6 +43,12 @@ h1 em { font-weight: 400; font-size: .66em; }
 .share .eyebrow { color: var(--sage); }
 h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 .intro { max-width: 530px; margin: 30px auto 48px; color: #6d766f; line-height: 1.8; font-size: 15px; }
+.upload-lock { position:relative; width:min(650px,100%); margin:0 auto; padding:46px 34px 42px; overflow:hidden; border:1px solid rgba(255,255,255,.75); border-radius:24px; background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(225,230,221,.45)); -webkit-backdrop-filter:blur(18px) saturate(125%); backdrop-filter:blur(18px) saturate(125%); box-shadow:0 24px 70px rgba(32,49,39,.12),inset 0 1px rgba(255,255,255,.9); }
+.upload-lock::before,.upload-lock::after { content:""; position:absolute; width:180px; height:180px; border-radius:50%; filter:blur(2px); background:rgba(125,148,128,.12); }
+.upload-lock::before { top:-110px; left:-70px; }.upload-lock::after { right:-80px; bottom:-120px; }
+.upload-lock .eyebrow { margin:18px 0 16px; }.upload-lock h3 { position:relative; margin:0; font:500 clamp(34px,6vw,52px)/1.05 "Cormorant Garamond",serif; }.upload-lock p:last-child { position:relative; margin:20px auto 0; max-width:470px; color:#667269; line-height:1.7; font-size:14px; }
+.lock-flourish { position:relative; display:inline-block; color:var(--sage); font:600 22px "Cormorant Garamond",serif; letter-spacing:.12em; }.lock-flourish i { font-size:13px; }
+.upload-lock[hidden],.actions[hidden],.floating-camera[hidden] { display:none !important; }
 .actions { display: grid; grid-template-columns: repeat(2, minmax(280px, 360px)); gap: 14px; }
 .actions button { border: 1px solid var(--line); background: rgba(255,255,255,.42); padding: 21px 22px; min-height: 94px; color: var(--ink); display: grid; grid-template-columns: 48px 1fr 20px; gap: 16px; align-items: center; text-align: left; cursor: pointer; transition: .25s ease; }
 .actions button:hover { border-color: var(--sage); background: white; transform: translateY(-2px); box-shadow: 0 12px 28px rgba(32,49,39,.08); }

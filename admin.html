@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="gallery.css?v=3">
+  <link rel="stylesheet" href="gallery.css?v=4">
 </head>
 <body>
   <header>
@@ -35,6 +35,7 @@
     <nav class="admin-tabs" id="adminTabs" hidden>
       <button class="active" id="photosTab" type="button">Photos</button>
       <button id="reservationsTab" type="button">Reservations</button>
+      <button id="settingsTab" type="button">Settings</button>
     </nav>
 
     <section class="gallery" id="gallerySection" hidden>
@@ -47,6 +48,19 @@
       </div>
       <p class="status" id="galleryStatus" role="status" aria-live="polite">Loading photos…</p>
       <div class="photo-grid" id="photoGrid"></div>
+    </section>
+
+    <section class="settings" id="settingsSection" hidden>
+      <div class="gallery-heading"><div><p class="eyebrow">Guest uploads</p><h1>Upload date</h1></div></div>
+      <div class="settings-card">
+        <p>Choose when guests can begin taking and uploading photos. The buttons unlock automatically at this exact time.</p>
+        <form id="settingsForm">
+          <label for="uploadUnlockAt">Unlock date and time</label>
+          <input id="uploadUnlockAt" name="uploadUnlockAt" type="datetime-local" required>
+          <button type="submit">Save upload date</button>
+        </form>
+        <p class="status" id="settingsStatus" role="status" aria-live="polite"></p>
+      </div>
     </section>
 
     <section class="reservations" id="reservationsSection" hidden>
@@ -73,6 +87,6 @@
   </dialog>
 
   <script src="config.js"></script>
-  <script src="gallery.js?v=13"></script>
+  <script src="gallery.js?v=14"></script>
 </body>
 </html>

@@ -9,7 +9,12 @@ const logoutButton = document.querySelector("#logoutButton");
 const adminTabs = document.querySelector("#adminTabs");
 const photosTab = document.querySelector("#photosTab");
 const reservationsTab = document.querySelector("#reservationsTab");
+const settingsTab = document.querySelector("#settingsTab");
 const reservationsSection = document.querySelector("#reservationsSection");
+const settingsSection = document.querySelector("#settingsSection");
+const settingsForm = document.querySelector("#settingsForm");
+const uploadUnlockAt = document.querySelector("#uploadUnlockAt");
+const settingsStatus = document.querySelector("#settingsStatus");
 const reservationStatus = document.querySelector("#reservationStatus");
 const reservationRows = document.querySelector("#reservationRows");
 const reservationTotals = document.querySelector("#reservationTotals");
@@ -32,6 +37,8 @@ loginForm.addEventListener("submit", signIn);
 logoutButton.addEventListener("click", signOut);
 photosTab.addEventListener("click", () => switchView("photos"));
 reservationsTab.addEventListener("click", () => switchView("reservations"));
+settingsTab.addEventListener("click", () => switchView("settings"));
+settingsForm.addEventListener("submit", saveUploadSettings);
 lightboxClose.addEventListener("click", closeLightbox);
 lightboxPrevious.addEventListener("click", () => showLightboxPhoto(activePhotoIndex - 1));
 lightboxNext.addEventListener("click", () => showLightboxPhoto(activePhotoIndex + 1));
@@ -163,11 +170,49 @@ function isImageFile(file) {
 
 async function switchView(view) {
   const showPhotos = view === "photos";
+  const showReservations = view === "reservations";
   photosTab.classList.toggle("active", showPhotos);
-  reservationsTab.classList.toggle("active", !showPhotos);
+  reservationsTab.classList.toggle("active", showReservations);
+  settingsTab.classList.toggle("active", view === "settings");
   gallerySection.hidden = !showPhotos;
-  reservationsSection.hidden = showPhotos;
-  if (!showPhotos) await loadReservations();
+  reservationsSection.hidden = !showReservations;
+  settingsSection.hidden = view !== "settings";
+  if (showReservations) await loadReservations();
+  if (view === "settings") await loadUploadSettings();
+}
+
+async function loadUploadSettings() {
+  settingsStatus.textContent = "Loading upload date…";
+  const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/site_settings?select=upload_unlock_at&id=eq.wedding&limit=1`, {
+    headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}` },
+    cache: "no-store",
+  });
+  const rows = await response.json();
+  if (!response.ok || !rows[0]) {
+    settingsStatus.textContent = rows.message || "Upload-date settings have not been installed yet.";
+    return;
+  }
+  const date = new Date(rows[0].upload_unlock_at);
+  uploadUnlockAt.value = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  settingsStatus.textContent = "";
+}
+
+async function saveUploadSettings(event) {
+  event.preventDefault();
+  const button = settingsForm.querySelector("button");
+  const date = new Date(uploadUnlockAt.value);
+  if (!Number.isFinite(date.getTime())) return;
+  button.disabled = true;
+  settingsStatus.textContent = "Saving…";
+  const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/site_settings?id=eq.wedding`, {
+    method: "PATCH",
+    headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}`, "Content-Type": "application/json", Prefer: "return=representation" },
+    body: JSON.stringify({ upload_unlock_at: date.toISOString(), updated_at: new Date().toISOString() }),
+  });
+  const result = await response.json();
+  button.disabled = false;
+  settingsStatus.textContent = response.ok && result.length ? "Upload date saved." : result.message || "Unable to save the upload date.";
+  settingsStatus.className = `status${response.ok && result.length ? " success" : ""}`;
 }
 
 async function loadReservations() {
@@ -342,6 +387,7 @@ function signOut() {
   photoGrid.replaceChildren();
   gallerySection.hidden = true;
   reservationsSection.hidden = true;
+  settingsSection.hidden = true;
   adminTabs.hidden = true;
   logoutButton.hidden = true;
   loginSection.hidden = false;

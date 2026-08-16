@@ -5,20 +5,30 @@ const selectionCount = document.querySelector("#selectionCount");
 const selectionNames = document.querySelector("#selectionNames");
 const submitButton = document.querySelector("#submitButton");
 const uploadStatus = document.querySelector("#uploadStatus");
+const uploadButton = document.querySelector("#uploadButton");
+const cameraButton = document.querySelector("#cameraButton");
+const floatingCameraButton = document.querySelector("#floatingCameraButton");
+const uploadActions = document.querySelector(".actions");
+const uploadLock = document.querySelector("#uploadLock");
+const uploadLockMessage = document.querySelector("#uploadLockMessage");
 let selectedFiles = [];
+let uploadsUnlocked = false;
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const RSVP_SESSION_KEY = "weddingRsvpSession";
+const DEFAULT_UNLOCK_AT = "2026-12-14T08:00:00.000Z";
 
-document.querySelector("#uploadButton").addEventListener("click", () => uploadInput.click());
-document.querySelector("#cameraButton").addEventListener("click", () => cameraInput.click());
-document.querySelector("#floatingCameraButton").addEventListener("click", () => cameraInput.click());
+uploadButton.addEventListener("click", () => uploadsUnlocked && uploadInput.click());
+cameraButton.addEventListener("click", () => uploadsUnlocked && cameraInput.click());
+floatingCameraButton.addEventListener("click", () => uploadsUnlocked && cameraInput.click());
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
+initializeUploadGate();
 
 uploadInput.addEventListener("change", addFiles);
 cameraInput.addEventListener("change", event => addFiles(event, true));
 
 async function addFiles(event, uploadImmediately = false) {
+  if (!uploadsUnlocked) return;
   const incomingFiles = [...event.target.files];
   const validFiles = incomingFiles.filter(file => file.type.startsWith("image/") && file.size <= MAX_FILE_SIZE);
   const rejectedCount = incomingFiles.length - validFiles.length;
@@ -52,7 +62,7 @@ function showFiles() {
 }
 
 async function uploadFiles(files = selectedFiles) {
-  if (!files.length) return;
+  if (!files.length || !uploadsUnlocked) return;
 
   submitButton.disabled = true;
   const filesToUpload = [...files];
@@ -78,6 +88,30 @@ async function uploadFiles(files = selectedFiles) {
     setStatus(error.message || "The upload failed. Please try again.", "error");
   } finally {
     submitButton.disabled = false;
+  }
+}
+
+async function initializeUploadGate() {
+  let unlockAt = DEFAULT_UNLOCK_AT;
+  try {
+    const config = await getUploadConfig();
+    const response = await fetch(`${config.supabaseUrl}/rest/v1/site_settings?select=upload_unlock_at&id=eq.wedding&limit=1`, {
+      headers: { apikey: config.anonKey },
+      cache: "no-store",
+    });
+    const rows = await response.json();
+    if (response.ok && rows[0]?.upload_unlock_at) unlockAt = rows[0].upload_unlock_at;
+  } catch (error) {
+    console.warn("Using the default upload date.", error);
+  }
+
+  const unlockDate = new Date(unlockAt);
+  uploadsUnlocked = Number.isFinite(unlockDate.getTime()) && Date.now() >= unlockDate.getTime();
+  uploadActions.hidden = !uploadsUnlocked;
+  floatingCameraButton.hidden = !uploadsUnlocked;
+  uploadLock.hidden = uploadsUnlocked;
+  if (!uploadsUnlocked) {
+    uploadLockMessage.textContent = `Photo and video sharing will open ${new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeStyle: "short" }).format(unlockDate)}.`;
   }
 }
 
