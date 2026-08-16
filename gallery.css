@@ -1,11 +1,11 @@
 :root { --cream: #f5f0e7; --ink: #203127; --sage: #637565; --line: #d7d4c8; }
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; background: var(--cream); color: var(--ink); font-family: "DM Sans", sans-serif; }
+body { margin: 0; min-height: 100vh; padding-top: 78px; background: var(--cream); color: var(--ink); font-family: "DM Sans", sans-serif; }
 button, input { font: inherit; }
-header { height: 78px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
-.monogram { color: inherit; text-decoration: none; font: 22px "Italiana", serif; letter-spacing: .08em; }
+header { position: fixed; z-index: 30; inset: 0 0 auto; height: 78px; padding: 0 5vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.22); color: white; background: rgba(20,35,25,.72); -webkit-backdrop-filter: blur(16px) saturate(130%); backdrop-filter: blur(16px) saturate(130%); box-shadow: 0 8px 30px rgba(7,18,11,.14); }
+.monogram { color: inherit; text-decoration: none; font: 600 25px "Cormorant Garamond", serif; letter-spacing: .1em; }
 .monogram i { font-size: 14px; }
-header button { border: 0; background: transparent; color: var(--sage); cursor: pointer; text-decoration: underline; }
+header button { border: 0; background: transparent; color: rgba(255,255,255,.9); cursor: pointer; text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
 main { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
 .login { width: min(440px, 100%); margin: 11vh auto 60px; text-align: center; }
 .eyebrow { margin: 0 0 20px; color: var(--sage); text-transform: uppercase; letter-spacing: .3em; font-size: 10px; font-weight: 600; }
@@ -28,7 +28,8 @@ form button:disabled { cursor: wait; opacity: .6; }
 .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .photo { position: relative; overflow: hidden; background: #e2e3dc; }
 .photo-view { width:100%; aspect-ratio:1; padding:0; border:0; background:transparent; cursor:zoom-in; }
-.photo img { width: 100%; height: 100%; display: block; object-fit: cover; transition:transform .2s ease; }
+.photo img { width: 100%; height: 100%; display: block; object-fit: cover; opacity:0; transition:opacity .25s ease,transform .2s ease; }
+.photo img.loaded { opacity:1; }
 .photo-view:hover img { transform:scale(1.025); }
 .photo-view:focus-visible { outline:3px solid var(--ink); outline-offset:-3px; }
 .photo a { position: absolute; right: 10px; bottom: 10px; padding: 9px 12px; background: rgba(32,49,39,.88); color: white; text-decoration: none; font-size: 11px; }

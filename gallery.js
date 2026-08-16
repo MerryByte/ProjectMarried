@@ -25,6 +25,7 @@ let activePhotoIndex = 0;
 let activeConfig;
 let activeToken;
 let activeSession;
+let thumbnailObserver;
 const ADMIN_SESSION_KEY = "weddingGallerySession";
 
 loginForm.addEventListener("submit", signIn);
@@ -93,9 +94,17 @@ async function showGallery(config, token) {
     photoCount.textContent = `${photos.length} ${photos.length === 1 ? "photo" : "photos"}`;
     galleryStatus.textContent = photos.length ? "" : "No photos have been uploaded yet.";
 
+    thumbnailObserver?.disconnect();
+    thumbnailObserver = new IntersectionObserver(entries => {
+      entries.filter(entry => entry.isIntersecting).forEach(entry => {
+        thumbnailObserver.unobserve(entry.target);
+        loadPhotoPreview(Number(entry.target.dataset.photoIndex));
+      });
+    }, { rootMargin: "500px" });
+
     for (const photo of photos) {
       const familyName = photo.uploaderId ? familyNames.get(photo.uploaderId) || "Unknown reservation" : "Unknown guest";
-      await addPhoto(config, token, photo, familyName);
+      addPhoto(config, token, photo, familyName);
     }
   } catch (error) {
     galleryStatus.textContent = error.message;
@@ -199,17 +208,7 @@ async function listFolder(config, token, prefix) {
   return result;
 }
 
-async function addPhoto(config, token, photo, familyName) {
-  const path = photo.path.split("/").map(encodeURIComponent).join("/");
-  const response = await fetch(`${config.supabaseUrl}/storage/v1/object/authenticated/${config.bucket}/${path}`, {
-    headers: { apikey: config.anonKey, Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error(`Unable to load a photo (${response.status}).`);
-
-  const objectUrl = URL.createObjectURL(await response.blob());
-  objectUrls.push(objectUrl);
-  galleryPhotos.push({ objectUrl, name: photo.name, familyName });
-  const photoIndex = galleryPhotos.length - 1;
+function addPhoto(config, token, photo, familyName) {
   const card = document.createElement("article");
   card.className = "photo";
   const viewButton = document.createElement("button");
@@ -217,36 +216,114 @@ async function addPhoto(config, token, photo, familyName) {
   viewButton.type = "button";
   viewButton.setAttribute("aria-label", "View photo full size");
   const image = document.createElement("img");
-  image.src = objectUrl;
   image.alt = "Guest wedding memory";
   image.loading = "lazy";
-  viewButton.addEventListener("click", () => openLightbox(photoIndex));
+  image.decoding = "async";
   const download = document.createElement("a");
-  download.href = objectUrl;
-  download.download = photo.name;
+  download.href = "#";
   download.textContent = "Download";
+  const photoIndex = galleryPhotos.push({ config, token, photo, familyName, image, thumbnailUrl: null, fullUrl: null, previewPromise: null, fullPromise: null }) - 1;
+  image.dataset.photoIndex = photoIndex;
+  viewButton.addEventListener("click", () => openLightbox(photoIndex));
+  download.addEventListener("click", event => downloadPhoto(event, photoIndex));
   const uploader = document.createElement("p");
   uploader.className = "photo-uploader";
   uploader.textContent = familyName;
   viewButton.append(image);
   card.append(viewButton, download, uploader);
   photoGrid.append(card);
+  thumbnailObserver.observe(image);
 }
 
-function openLightbox(index) {
-  showLightboxPhoto(index);
-  photoLightbox.showModal();
+async function loadPhotoPreview(index) {
+  const entry = galleryPhotos[index];
+  if (!entry || entry.thumbnailUrl) return entry?.thumbnailUrl;
+  if (entry.previewPromise) return entry.previewPromise;
+
+  entry.previewPromise = (async () => {
+    const path = entry.photo.path.split("/").map(encodeURIComponent).join("/");
+    const headers = { apikey: entry.config.anonKey, Authorization: `Bearer ${entry.token}` };
+    let response = await fetch(`${entry.config.supabaseUrl}/storage/v1/render/image/authenticated/${entry.config.bucket}/${path}?width=640&height=640&resize=cover&quality=70`, { headers });
+    let isFullSize = false;
+
+    if (!response.ok) {
+      response = await fetch(`${entry.config.supabaseUrl}/storage/v1/object/authenticated/${entry.config.bucket}/${path}`, { headers });
+      isFullSize = true;
+    }
+    if (!response.ok) throw new Error(`Unable to load a photo (${response.status}).`);
+
+    const objectUrl = URL.createObjectURL(await response.blob());
+    objectUrls.push(objectUrl);
+    entry.thumbnailUrl = objectUrl;
+    if (isFullSize) entry.fullUrl = objectUrl;
+    entry.image.addEventListener("load", () => entry.image.classList.add("loaded"), { once: true });
+    entry.image.src = objectUrl;
+    return objectUrl;
+  })().catch(error => {
+    entry.image.alt = "Photo could not be loaded";
+    console.error(error);
+  });
+
+  return entry.previewPromise;
 }
 
-function showLightboxPhoto(index) {
+async function loadFullPhoto(index) {
+  const entry = galleryPhotos[index];
+  if (!entry || entry.fullUrl) return entry?.fullUrl;
+  if (entry.fullPromise) return entry.fullPromise;
+
+  entry.fullPromise = (async () => {
+    const path = entry.photo.path.split("/").map(encodeURIComponent).join("/");
+    const response = await fetch(`${entry.config.supabaseUrl}/storage/v1/object/authenticated/${entry.config.bucket}/${path}`, {
+      headers: { apikey: entry.config.anonKey, Authorization: `Bearer ${entry.token}` },
+    });
+    if (!response.ok) throw new Error(`Unable to load the full photo (${response.status}).`);
+    entry.fullUrl = URL.createObjectURL(await response.blob());
+    objectUrls.push(entry.fullUrl);
+    return entry.fullUrl;
+  })();
+
+  return entry.fullPromise;
+}
+
+async function downloadPhoto(event, index) {
+  event.preventDefault();
+  try {
+    const url = await loadFullPhoto(index);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = galleryPhotos[index].photo.name;
+    link.click();
+  } catch (error) {
+    galleryStatus.textContent = error.message;
+  }
+}
+
+async function openLightbox(index) {
+  const loaded = await showLightboxPhoto(index);
+  if (loaded) photoLightbox.showModal();
+}
+
+async function showLightboxPhoto(index) {
   if (!galleryPhotos.length) return;
   activePhotoIndex = (index + galleryPhotos.length) % galleryPhotos.length;
   const photo = galleryPhotos[activePhotoIndex];
-  lightboxImage.src = photo.objectUrl;
+  const requestedIndex = activePhotoIndex;
+  lightboxCaption.textContent = `Loading full photo… · ${requestedIndex + 1} of ${galleryPhotos.length}`;
+  let fullUrl;
+  try {
+    fullUrl = await loadFullPhoto(requestedIndex);
+  } catch (error) {
+    lightboxCaption.textContent = error.message;
+    return false;
+  }
+  if (activePhotoIndex !== requestedIndex) return;
+  lightboxImage.src = fullUrl;
   lightboxCaption.textContent = `${photo.familyName} · ${activePhotoIndex + 1} of ${galleryPhotos.length}`;
   const hasMultiplePhotos = galleryPhotos.length > 1;
   lightboxPrevious.hidden = !hasMultiplePhotos;
   lightboxNext.hidden = !hasMultiplePhotos;
+  return true;
 }
 
 function closeLightbox() {
@@ -258,6 +335,7 @@ function signOut() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   activeSession = undefined;
   activeToken = undefined;
+  thumbnailObserver?.disconnect();
   objectUrls.forEach(URL.revokeObjectURL);
   objectUrls = [];
   galleryPhotos = [];
