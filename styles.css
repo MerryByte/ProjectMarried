@@ -45,11 +45,10 @@ h1 em { font-weight: 400; font-size: .66em; }
 .schedule { padding:120px 5vw; text-align:center; background:#e8e8df; scroll-margin-top:90px; }
 .schedule .eyebrow { color:var(--sage); }
 .schedule h2 { margin-bottom:60px; }
-.schedule-list { width:min(1080px,100%); margin:auto; display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid rgba(32,49,39,.2); border-bottom:1px solid rgba(32,49,39,.2); }
+.schedule-list { width:min(760px,100%); margin:auto; display:grid; grid-template-columns:repeat(2,1fr); border-top:1px solid rgba(32,49,39,.2); border-bottom:1px solid rgba(32,49,39,.2); }
 .schedule-list article { padding:38px 32px 42px; }
 .schedule-list article + article { border-left:1px solid rgba(32,49,39,.2); }
-.schedule-list span { color:var(--sage); font-size:10px; letter-spacing:.2em; }
-.schedule-list h3 { margin:18px 0 12px; font:400 30px "Italiana",serif; }
+.schedule-list h3 { margin:0 0 12px; font:400 30px "Italiana",serif; }
 .schedule-list p { margin:0; color:#6d766f; font-size:13px; line-height:1.7; }
 .schedule-list p strong,.schedule-list p small { display:block; }
 .schedule-list p strong { color:var(--ink); font-size:13px; font-weight:600; }
