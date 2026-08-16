@@ -8,18 +8,21 @@ const uploadStatus = document.querySelector("#uploadStatus");
 const uploadButton = document.querySelector("#uploadButton");
 const cameraButton = document.querySelector("#cameraButton");
 const floatingCameraButton = document.querySelector("#floatingCameraButton");
-const uploadActions = document.querySelector(".actions");
 const uploadLock = document.querySelector("#uploadLock");
 const uploadLockMessage = document.querySelector("#uploadLockMessage");
+const uploadGate = document.querySelector("#uploadGate");
+const cameraToast = document.querySelector("#cameraToast");
 let selectedFiles = [];
 let uploadsUnlocked = false;
+let unlockMessage = "Photo and video sharing is not open yet.";
+let toastTimer;
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const RSVP_SESSION_KEY = "weddingRsvpSession";
 const DEFAULT_UNLOCK_AT = "2026-12-14T08:00:00.000Z";
 
-uploadButton.addEventListener("click", () => uploadsUnlocked && uploadInput.click());
-cameraButton.addEventListener("click", () => uploadsUnlocked && cameraInput.click());
-floatingCameraButton.addEventListener("click", () => uploadsUnlocked && cameraInput.click());
+uploadButton.addEventListener("click", () => openPicker(uploadInput));
+cameraButton.addEventListener("click", () => openPicker(cameraInput));
+floatingCameraButton.addEventListener("click", () => openPicker(cameraInput, true));
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
 initializeUploadGate();
@@ -91,6 +94,18 @@ async function uploadFiles(files = selectedFiles) {
   }
 }
 
+function openPicker(input, showToast = false) {
+  if (uploadsUnlocked) {
+    input.click();
+    return;
+  }
+  if (!showToast) return;
+  cameraToast.textContent = unlockMessage;
+  cameraToast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { cameraToast.hidden = true; }, 5000);
+}
+
 async function initializeUploadGate() {
   let unlockAt = DEFAULT_UNLOCK_AT;
   try {
@@ -107,11 +122,12 @@ async function initializeUploadGate() {
 
   const unlockDate = new Date(unlockAt);
   uploadsUnlocked = Number.isFinite(unlockDate.getTime()) && Date.now() >= unlockDate.getTime();
-  uploadActions.hidden = !uploadsUnlocked;
-  floatingCameraButton.hidden = !uploadsUnlocked;
+  uploadGate.classList.toggle("locked", !uploadsUnlocked);
   uploadLock.hidden = uploadsUnlocked;
   if (!uploadsUnlocked) {
-    uploadLockMessage.textContent = `Photo and video sharing will open ${new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeStyle: "short" }).format(unlockDate)}.`;
+    unlockMessage = `Photo and video sharing opens ${new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeStyle: "short" }).format(unlockDate)}.`;
+    uploadLockMessage.textContent = unlockMessage;
+    floatingCameraButton.setAttribute("aria-label", `Camera locked. ${unlockMessage}`);
   }
 }
 
