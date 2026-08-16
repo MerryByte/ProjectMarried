@@ -1,6 +1,12 @@
 create table if not exists public.site_settings (
   id text primary key,
   upload_unlock_at timestamptz not null,
+  ceremony_time time,
+  ceremony_location text,
+  intermission_time time,
+  intermission_location text,
+  celebration_time time,
+  celebration_location text,
   updated_at timestamptz not null default now()
 );
 
@@ -10,7 +16,7 @@ on conflict (id) do nothing;
 
 alter table public.site_settings enable row level security;
 grant select on public.site_settings to anon, authenticated;
-grant update (upload_unlock_at, updated_at) on public.site_settings to authenticated;
+grant update (upload_unlock_at, ceremony_time, ceremony_location, intermission_time, intermission_location, celebration_time, celebration_location, updated_at) on public.site_settings to authenticated;
 
 drop policy if exists "Wedding settings are public" on public.site_settings;
 create policy "Wedding settings are public"

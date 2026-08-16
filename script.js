@@ -31,6 +31,7 @@ cameraToastClose.addEventListener("click", dismissCameraToast);
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
 initializeUploadGate();
+initializeSchedule();
 
 uploadInput.addEventListener("change", addFiles);
 cameraInput.addEventListener("change", event => addFiles(event, true));
@@ -161,6 +162,33 @@ async function initializeUploadGate() {
     uploadLockMessage.textContent = unlockMessage;
     floatingCameraButton.setAttribute("aria-label", `Camera locked. ${unlockMessage}`);
   }
+}
+
+async function initializeSchedule() {
+  try {
+    const config = await getUploadConfig();
+    const fields = "ceremony_time,ceremony_location,intermission_time,intermission_location,celebration_time,celebration_location";
+    const response = await fetch(`${config.supabaseUrl}/rest/v1/site_settings?select=${fields}&id=eq.wedding&limit=1`, {
+      headers: { apikey: config.anonKey },
+      cache: "no-store",
+    });
+    const rows = await response.json();
+    if (!response.ok || !rows[0]) return;
+    for (const event of ["ceremony", "intermission", "celebration"]) {
+      const time = rows[0][`${event}_time`];
+      const location = rows[0][`${event}_location`];
+      if (time) document.querySelector(`#${event}Time`).textContent = formatScheduleTime(time);
+      if (location) document.querySelector(`#${event}Location`).textContent = location;
+    }
+  } catch (error) {
+    console.warn("Using default schedule details.", error);
+  }
+}
+
+function formatScheduleTime(value) {
+  const [hours, minutes] = value.split(":").map(Number);
+  const date = new Date(2000, 0, 1, hours, minutes);
+  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date);
 }
 
 async function getUploadConfig() {

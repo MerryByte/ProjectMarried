@@ -25,7 +25,7 @@ form button:disabled { cursor: wait; opacity: .6; }
 .admin-tabs { display:flex; gap:8px; padding-top:28px; border-bottom:1px solid var(--line); }
 .admin-tabs button { padding:13px 18px; border:0; border-bottom:2px solid transparent; background:transparent; color:#788179; cursor:pointer; }
 .admin-tabs button.active { border-bottom-color:var(--ink); color:var(--ink); }
-.settings { padding:70px 0; }.settings-card { width:min(560px,100%); padding:30px; border:1px solid rgba(255,255,255,.8); border-radius:18px; background:rgba(255,255,255,.52); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); box-shadow:0 20px 60px rgba(32,49,39,.09); }.settings-card>p:first-child { margin:0 0 24px; color:#6d766f; line-height:1.7; }.settings-card form { max-width:430px; }.settings-card .status.success { color:#37623f; }
+.settings { padding:70px 0; }.settings-card { width:min(640px,100%); padding:30px; border:1px solid rgba(255,255,255,.8); border-radius:18px; background:rgba(255,255,255,.52); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); box-shadow:0 20px 60px rgba(32,49,39,.09); }.settings-card>p:first-child { margin:0 0 24px; color:#6d766f; line-height:1.7; }.settings-card form { max-width:520px; }.settings-card fieldset { display:grid; gap:8px; margin:0 0 14px; padding:18px; border:1px solid var(--line); }.settings-card legend { padding:0 8px; font:400 21px "Italiana",serif; }.settings-card fieldset label:not(:first-of-type) { margin-top:10px; }.settings-card .status.success { color:#37623f; }
 .gallery-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
 .gallery-heading .eyebrow { margin-bottom: 10px; }
 .gallery-heading > p { color: var(--sage); }

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="gallery.css?v=7">
+  <link rel="stylesheet" href="gallery.css?v=8">
 </head>
 <body>
   <header>
@@ -52,13 +52,15 @@
     </section>
 
     <section class="settings" id="settingsSection" hidden>
-      <div class="gallery-heading"><div><p class="eyebrow">Guest uploads</p><h1>Upload date</h1></div></div>
+      <div class="gallery-heading"><div><p class="eyebrow">Wedding details</p><h1>Site settings</h1></div></div>
       <div class="settings-card">
-        <p>Choose when guests can begin taking and uploading photos. The buttons unlock automatically at this exact time.</p>
+        <p>Choose when photo sharing opens and update the time and location shown in the wedding schedule.</p>
         <form id="settingsForm">
-          <label for="uploadUnlockAt">Unlock date and time</label>
-          <input id="uploadUnlockAt" name="uploadUnlockAt" type="datetime-local" required>
-          <button type="submit">Save upload date</button>
+          <fieldset><legend>Guest photos</legend><label for="uploadUnlockAt">Unlock date and time</label><input id="uploadUnlockAt" name="uploadUnlockAt" type="datetime-local" required></fieldset>
+          <fieldset><legend>Ceremony</legend><label for="ceremonyTime">Time</label><input id="ceremonyTime" type="time"><label for="ceremonyLocation">Location</label><input id="ceremonyLocation" maxlength="160" placeholder="Venue or address"></fieldset>
+          <fieldset><legend>Intermission</legend><label for="intermissionTime">Time</label><input id="intermissionTime" type="time"><label for="intermissionLocation">Location</label><input id="intermissionLocation" maxlength="160" placeholder="Venue or meeting point"></fieldset>
+          <fieldset><legend>Celebration</legend><label for="celebrationTime">Time</label><input id="celebrationTime" type="time"><label for="celebrationLocation">Location</label><input id="celebrationLocation" maxlength="160" placeholder="Reception venue or address"></fieldset>
+          <button type="submit">Save settings</button>
         </form>
         <p class="status" id="settingsStatus" role="status" aria-live="polite"></p>
       </div>
@@ -88,6 +90,6 @@
   </dialog>
 
   <script src="config.js"></script>
-  <script src="gallery.js?v=15"></script>
+  <script src="gallery.js?v=16"></script>
 </body>
 </html>

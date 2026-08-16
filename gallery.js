@@ -15,6 +15,7 @@ const reservationsSection = document.querySelector("#reservationsSection");
 const settingsSection = document.querySelector("#settingsSection");
 const settingsForm = document.querySelector("#settingsForm");
 const uploadUnlockAt = document.querySelector("#uploadUnlockAt");
+const scheduleInputs = ["ceremonyTime", "ceremonyLocation", "intermissionTime", "intermissionLocation", "celebrationTime", "celebrationLocation"];
 const settingsStatus = document.querySelector("#settingsStatus");
 const reservationStatus = document.querySelector("#reservationStatus");
 const reservationRows = document.querySelector("#reservationRows");
@@ -193,18 +194,23 @@ function renderNextPhotos() {
 }
 
 async function loadUploadSettings() {
-  settingsStatus.textContent = "Loading upload date…";
-  const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/site_settings?select=upload_unlock_at&id=eq.wedding&limit=1`, {
+  settingsStatus.textContent = "Loading settings…";
+  const fields = "upload_unlock_at,ceremony_time,ceremony_location,intermission_time,intermission_location,celebration_time,celebration_location";
+  const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/site_settings?select=${fields}&id=eq.wedding&limit=1`, {
     headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}` },
     cache: "no-store",
   });
   const rows = await response.json();
   if (!response.ok || !rows[0]) {
-    settingsStatus.textContent = rows.message || "Upload-date settings have not been installed yet.";
+    settingsStatus.textContent = rows.message || "Site settings have not been installed yet.";
     return;
   }
   const date = new Date(rows[0].upload_unlock_at);
   uploadUnlockAt.value = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  scheduleInputs.forEach(id => {
+    const key = id.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    document.querySelector(`#${id}`).value = rows[0][key] || "";
+  });
   settingsStatus.textContent = "";
 }
 
@@ -218,11 +224,20 @@ async function saveUploadSettings(event) {
   const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/site_settings?id=eq.wedding`, {
     method: "PATCH",
     headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}`, "Content-Type": "application/json", Prefer: "return=representation" },
-    body: JSON.stringify({ upload_unlock_at: date.toISOString(), updated_at: new Date().toISOString() }),
+    body: JSON.stringify({
+      upload_unlock_at: date.toISOString(),
+      ceremony_time: document.querySelector("#ceremonyTime").value || null,
+      ceremony_location: document.querySelector("#ceremonyLocation").value.trim() || null,
+      intermission_time: document.querySelector("#intermissionTime").value || null,
+      intermission_location: document.querySelector("#intermissionLocation").value.trim() || null,
+      celebration_time: document.querySelector("#celebrationTime").value || null,
+      celebration_location: document.querySelector("#celebrationLocation").value.trim() || null,
+      updated_at: new Date().toISOString(),
+    }),
   });
   const result = await response.json();
   button.disabled = false;
-  settingsStatus.textContent = response.ok && result.length ? "Upload date saved." : result.message || "Unable to save the upload date.";
+  settingsStatus.textContent = response.ok && result.length ? "Site settings saved." : result.message || "Unable to save the settings.";
   settingsStatus.className = `status${response.ok && result.length ? " success" : ""}`;
 }
 
