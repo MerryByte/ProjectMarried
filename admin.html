@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="gallery.css?v=8">
+  <link rel="stylesheet" href="gallery.css?v=9">
 </head>
 <body>
   <header>
@@ -58,7 +58,6 @@
         <form id="settingsForm">
           <fieldset><legend>Guest photos</legend><label for="uploadUnlockAt">Unlock date and time</label><input id="uploadUnlockAt" name="uploadUnlockAt" type="datetime-local" required></fieldset>
           <fieldset><legend>Ceremony</legend><label for="ceremonyTime">Time</label><input id="ceremonyTime" type="time"><label for="ceremonyLocation">Location</label><input id="ceremonyLocation" maxlength="160" placeholder="Venue or address"></fieldset>
-          <fieldset><legend>Intermission</legend><label for="intermissionTime">Time</label><input id="intermissionTime" type="time"><label for="intermissionLocation">Location</label><input id="intermissionLocation" maxlength="160" placeholder="Venue or meeting point"></fieldset>
           <fieldset><legend>Celebration</legend><label for="celebrationTime">Time</label><input id="celebrationTime" type="time"><label for="celebrationLocation">Location</label><input id="celebrationLocation" maxlength="160" placeholder="Reception venue or address"></fieldset>
           <button type="submit">Save settings</button>
         </form>
@@ -90,6 +89,6 @@
   </dialog>
 
   <script src="config.js"></script>
-  <script src="gallery.js?v=16"></script>
+  <script src="gallery.js?v=17"></script>
 </body>
 </html>
