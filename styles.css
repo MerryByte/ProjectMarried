@@ -26,10 +26,9 @@ nav a { text-decoration: none; text-transform: uppercase; letter-spacing: .16em;
 .nav-links {
 display: flex; 
 align-items: center; 
-gap: 28px; 
+gap: 0;
 }
-.nav-links a + a { position:relative; }
-.nav-links a + a::before { content:""; position:absolute; left:-14px; top:50%; width:1px; height:14px; background:rgba(255,255,255,.38); transform:translateY(-50%); }
+.nav-links a + a { margin-left:20px; padding-left:20px; border-left:1px solid rgba(255,255,255,.58); }
 .monogram { font: 600 25px "Cormorant Garamond", serif; letter-spacing: .1em; }
 .monogram i { font-size: 14px; }
 .hero-copy { position: relative; z-index: 1; text-align: center; padding: 100px 24px 20px; }
@@ -38,7 +37,7 @@ h1, h2 { margin: 0; font: 400 clamp(62px, 10vw, 150px)/.87 "Italiana", serif; le
 .hero h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; letter-spacing: -.035em; }
 h1 em { font-weight: 400; font-size: .66em; }
 .date { margin: 34px 0 0; font-size: 11px; letter-spacing: .3em; }
-.hero-rsvp { display:inline-block; margin-top:34px; padding:14px 30px; border:1px solid rgba(255,255,255,.72); text-decoration:none; text-transform:uppercase; letter-spacing:.2em; font-size:10px; transition:.2s ease; }
+.hero-rsvp { display:inline-block; margin-top:34px; padding:14px 30px; border:1px solid rgba(255,255,255,.8); border-radius:2px; background:rgba(20,35,25,.42); -webkit-backdrop-filter:blur(12px) saturate(130%); backdrop-filter:blur(12px) saturate(130%); box-shadow:0 8px 24px rgba(7,18,11,.18); text-decoration:none; text-transform:uppercase; letter-spacing:.2em; font-size:10px; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,.35); transition:.2s ease; }
 .hero-rsvp:hover { color:var(--ink); background:white; }
 .scroll { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 48px; text-decoration: none; text-transform: uppercase; letter-spacing: .2em; font-size: 9px; }
 .scroll b { font-size: 22px; font-weight: 400; }
@@ -93,9 +92,8 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 @media (max-width: 680px) {
   nav { height: 76px; padding: 0 22px; }
   .nav-links { display: flex; }
-  .nav-links { gap: 13px; }
   .nav-links a { font-size:9px; letter-spacing:.1em; }
-  .nav-links a + a::before { left:-7px; height:12px; }
+  .nav-links a + a { margin-left:9px; padding-left:9px; }
   .hero { background-image: url("public/couple-hero-mobile.webp"); background-position: center; }
   .shade { background: linear-gradient(0deg, rgba(7,18,11,.63), rgba(7,18,11,.05) 75%); }
   .hero-copy { align-self: end; padding-bottom: 50px; }
