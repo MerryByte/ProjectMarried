@@ -20,6 +20,11 @@ export default {
       );
     }
 
-    return env.ASSETS.fetch(request);
+    return env.ASSETS.fetch(request).then(response => {
+      if (url.pathname !== "/admin.html") return response;
+      const headers = new Headers(response.headers);
+      headers.set("X-Robots-Tag", "noindex, nofollow");
+      return new Response(response.body, { status: response.status, headers });
+    });
   }
 };

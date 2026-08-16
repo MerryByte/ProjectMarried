@@ -40,6 +40,7 @@ h1 em { font-weight: 400; font-size: .66em; }
 .scroll b { font-size: 22px; font-weight: 400; }
 
 .share { min-height: 100svh; padding: 120px 24px 80px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.share { content-visibility: auto; contain-intrinsic-size: 900px; }
 .share .eyebrow { color: var(--sage); }
 h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 .intro { max-width: 530px; margin: 30px auto 48px; color: #6d766f; line-height: 1.8; font-size: 15px; }
