@@ -35,6 +35,7 @@ form button:disabled { cursor: wait; opacity: .6; }
 .photo-view:focus-visible { outline:3px solid var(--ink); outline-offset:-3px; }
 .photo a { position: absolute; right: 10px; bottom: 10px; padding: 9px 12px; background: rgba(32,49,39,.88); color: white; text-decoration: none; font-size: 11px; }
 .photo .photo-uploader { min-height:42px; margin:0; padding:12px 84px 12px 12px; background:white; color:var(--ink); font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.load-more { display:block; min-width:210px; min-height:50px; margin:30px auto 0; padding:0 22px; border:1px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; text-transform:uppercase; letter-spacing:.12em; font-size:11px; font-weight:600; }.load-more:hover { background:var(--ink); color:white; }.load-more[hidden] { display:none; }
 .lightbox { width:100vw; max-width:none; height:100vh; max-height:none; margin:0; padding:0; border:0; background:rgba(13,20,16,.96); color:white; }
 .lightbox[open] { display:grid; grid-template-columns:minmax(48px,90px) minmax(0,1fr) minmax(48px,90px); align-items:center; }
 .lightbox::backdrop { background:rgba(13,20,16,.96); }

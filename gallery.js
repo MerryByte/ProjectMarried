@@ -5,6 +5,7 @@ const loginStatus = document.querySelector("#loginStatus");
 const galleryStatus = document.querySelector("#galleryStatus");
 const photoGrid = document.querySelector("#photoGrid");
 const photoCount = document.querySelector("#photoCount");
+const loadMoreButton = document.querySelector("#loadMoreButton");
 const logoutButton = document.querySelector("#logoutButton");
 const adminTabs = document.querySelector("#adminTabs");
 const photosTab = document.querySelector("#photosTab");
@@ -31,6 +32,9 @@ let activeConfig;
 let activeToken;
 let activeSession;
 let thumbnailObserver;
+let pendingGalleryPhotos = [];
+let renderedPhotoCount = 0;
+const GALLERY_PAGE_SIZE = 24;
 const ADMIN_SESSION_KEY = "weddingGallerySession";
 
 loginForm.addEventListener("submit", signIn);
@@ -39,6 +43,7 @@ photosTab.addEventListener("click", () => switchView("photos"));
 reservationsTab.addEventListener("click", () => switchView("reservations"));
 settingsTab.addEventListener("click", () => switchView("settings"));
 settingsForm.addEventListener("submit", saveUploadSettings);
+loadMoreButton.addEventListener("click", renderNextPhotos);
 lightboxClose.addEventListener("click", closeLightbox);
 lightboxPrevious.addEventListener("click", () => showLightboxPhoto(activePhotoIndex - 1));
 lightboxNext.addEventListener("click", () => showLightboxPhoto(activePhotoIndex + 1));
@@ -109,10 +114,9 @@ async function showGallery(config, token) {
       });
     }, { rootMargin: "500px" });
 
-    for (const photo of photos) {
-      const familyName = photo.uploaderId ? familyNames.get(photo.uploaderId) || "Unknown reservation" : "Unknown guest";
-      addPhoto(config, token, photo, familyName);
-    }
+    pendingGalleryPhotos = photos.map(photo => ({ photo, familyName: photo.uploaderId ? familyNames.get(photo.uploaderId) || "Unknown reservation" : "Unknown guest" }));
+    renderedPhotoCount = 0;
+    renderNextPhotos();
   } catch (error) {
     galleryStatus.textContent = error.message;
     if (/401|JWT|authorized|permission/i.test(error.message)) signOut();
@@ -179,6 +183,13 @@ async function switchView(view) {
   settingsSection.hidden = view !== "settings";
   if (showReservations) await loadReservations();
   if (view === "settings") await loadUploadSettings();
+}
+
+function renderNextPhotos() {
+  const nextPhotos = pendingGalleryPhotos.slice(renderedPhotoCount, renderedPhotoCount + GALLERY_PAGE_SIZE);
+  nextPhotos.forEach(({ photo, familyName }) => addPhoto(activeConfig, activeToken, photo, familyName));
+  renderedPhotoCount += nextPhotos.length;
+  loadMoreButton.hidden = renderedPhotoCount >= pendingGalleryPhotos.length;
 }
 
 async function loadUploadSettings() {
@@ -384,6 +395,9 @@ function signOut() {
   objectUrls.forEach(URL.revokeObjectURL);
   objectUrls = [];
   galleryPhotos = [];
+  pendingGalleryPhotos = [];
+  renderedPhotoCount = 0;
+  loadMoreButton.hidden = true;
   photoGrid.replaceChildren();
   gallerySection.hidden = true;
   reservationsSection.hidden = true;
