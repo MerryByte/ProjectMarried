@@ -167,13 +167,19 @@ async function initializeUploadGate() {
 async function initializeSchedule() {
   try {
     const config = await getUploadConfig();
-    const fields = "ceremony_time,ceremony_location,intermission_time,intermission_location,celebration_time,celebration_location";
+    const fields = "upload_unlock_at,ceremony_time,ceremony_location,intermission_time,intermission_location,celebration_time,celebration_location";
     const response = await fetch(`${config.supabaseUrl}/rest/v1/site_settings?select=${fields}&id=eq.wedding&limit=1`, {
       headers: { apikey: config.anonKey },
       cache: "no-store",
     });
     const rows = await response.json();
     if (!response.ok || !rows[0]) return;
+    const weddingDate = new Date(rows[0].upload_unlock_at);
+    if (Number.isFinite(weddingDate.getTime())) {
+      const options = { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric" };
+      document.querySelector("#weddingDateShort").textContent = new Intl.DateTimeFormat(undefined, options).format(weddingDate);
+      document.querySelector("#weddingDateLong").textContent = new Intl.DateTimeFormat(undefined, { ...options, month: "long" }).format(weddingDate);
+    }
     for (const event of ["ceremony", "intermission", "celebration"]) {
       const time = rows[0][`${event}_time`];
       const location = rows[0][`${event}_location`];
