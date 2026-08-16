@@ -14,10 +14,22 @@ const uploadGate = document.querySelector("#uploadGate");
 const cameraToast = document.querySelector("#cameraToast");
 const cameraToastMessage = document.querySelector("#cameraToastMessage");
 const cameraToastClose = document.querySelector("#cameraToastClose");
+const cameraRecorder = document.querySelector("#cameraRecorder");
+const cameraPreview = document.querySelector("#cameraPreview");
+const cameraResolution = document.querySelector("#cameraResolution");
+const cameraRecorderClose = document.querySelector("#cameraRecorderClose");
+const takePhotoButton = document.querySelector("#takePhotoButton");
+const recordVideoButton = document.querySelector("#recordVideoButton");
+const stopVideoButton = document.querySelector("#stopVideoButton");
 let selectedFiles = [];
 let uploadsUnlocked = false;
 let unlockMessage = "Photo sharing is not open yet.";
 let toastTimer;
+let cameraStream;
+let mediaRecorder;
+let recordedChunks = [];
+let recordingTimer;
+let discardRecording = false;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const MAX_FILES_PER_BATCH = 20;
@@ -26,9 +38,15 @@ const RSVP_SESSION_KEY = "weddingRsvpSession";
 const DEFAULT_UNLOCK_AT = "2026-12-14T08:00:00.000Z";
 
 uploadButton.addEventListener("click", () => openPicker(uploadInput));
-cameraButton.addEventListener("click", () => openPicker(cameraInput));
-floatingCameraButton.addEventListener("click", () => openPicker(cameraInput, true));
+cameraButton.addEventListener("click", () => openHighQualityCamera(false));
+floatingCameraButton.addEventListener("click", () => openHighQualityCamera(true));
 cameraToastClose.addEventListener("click", dismissCameraToast);
+cameraRecorderClose.addEventListener("click", closeHighQualityCamera);
+takePhotoButton.addEventListener("click", takeHighResolutionPhoto);
+recordVideoButton.addEventListener("click", startHighResolutionVideo);
+stopVideoButton.addEventListener("click", stopHighResolutionVideo);
+cameraRecorder.addEventListener("cancel", event => { event.preventDefault(); closeHighQualityCamera(); });
+window.addEventListener("pagehide", stopCameraStream);
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
 initializeUploadGate();
@@ -138,6 +156,124 @@ function openPicker(input, showToast = false) {
   cameraToast.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(dismissCameraToast, 5000);
+}
+
+async function openHighQualityCamera(showToast = false) {
+  if (!uploadsUnlocked) {
+    if (showToast) {
+      cameraToastMessage.textContent = unlockMessage;
+      cameraToast.hidden = false;
+    }
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    cameraInput.click();
+    return;
+  }
+  cameraRecorder.showModal();
+  cameraResolution.textContent = "Starting high-quality camera…";
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 30 },
+      },
+      audio: true,
+    });
+    cameraPreview.srcObject = cameraStream;
+    await cameraPreview.play();
+    const settings = cameraStream.getVideoTracks()[0]?.getSettings();
+    cameraResolution.textContent = settings?.width && settings?.height
+      ? `Recording at ${settings.width} × ${settings.height}`
+      : "High-quality camera ready";
+  } catch (error) {
+    closeHighQualityCamera();
+    setStatus("High-quality camera could not open. Check camera and microphone permissions, or choose from your library.", "error");
+  }
+}
+
+async function takeHighResolutionPhoto() {
+  if (!cameraStream || !cameraPreview.videoWidth) return;
+  const canvas = document.createElement("canvas");
+  canvas.width = cameraPreview.videoWidth;
+  canvas.height = cameraPreview.videoHeight;
+  canvas.getContext("2d").drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .95));
+  if (!blob) return;
+  const file = new File([blob], `wedding-${Date.now()}.jpg`, { type: "image/jpeg" });
+  closeHighQualityCamera();
+  await uploadCapturedFile(file);
+}
+
+function startHighResolutionVideo() {
+  if (!cameraStream || mediaRecorder?.state === "recording") return;
+  const mimeTypes = ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
+  const mimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || "";
+  recordedChunks = [];
+  discardRecording = false;
+  try {
+    mediaRecorder = new MediaRecorder(cameraStream, {
+      ...(mimeType ? { mimeType } : {}),
+      videoBitsPerSecond: 8_000_000,
+      audioBitsPerSecond: 128_000,
+    });
+  } catch {
+    mediaRecorder = new MediaRecorder(cameraStream);
+  }
+  mediaRecorder.addEventListener("dataavailable", event => { if (event.data.size) recordedChunks.push(event.data); });
+  mediaRecorder.addEventListener("stop", finishHighResolutionVideo, { once: true });
+  mediaRecorder.start(1000);
+  recordVideoButton.hidden = true;
+  takePhotoButton.hidden = true;
+  stopVideoButton.hidden = false;
+  cameraResolution.textContent = "Recording in high quality · 45 seconds maximum";
+  recordingTimer = setTimeout(stopHighResolutionVideo, 45000);
+}
+
+function stopHighResolutionVideo() {
+  if (mediaRecorder?.state === "recording") mediaRecorder.stop();
+}
+
+async function finishHighResolutionVideo() {
+  clearTimeout(recordingTimer);
+  if (discardRecording) return;
+  const type = (mediaRecorder.mimeType || recordedChunks[0]?.type || "video/webm").split(";")[0];
+  const blob = new Blob(recordedChunks, { type });
+  const extension = type.includes("mp4") ? "mp4" : "webm";
+  const file = new File([blob], `wedding-${Date.now()}.${extension}`, { type });
+  closeHighQualityCamera();
+  if (file.size > MAX_VIDEO_SIZE) {
+    setStatus("The recording exceeded 50 MB. Please record a shorter video.", "error");
+    return;
+  }
+  await uploadCapturedFile(file);
+}
+
+async function uploadCapturedFile(file) {
+  selectedFiles.push(file);
+  showFiles();
+  await uploadFiles([file]);
+}
+
+function closeHighQualityCamera() {
+  if (mediaRecorder?.state === "recording") {
+    discardRecording = true;
+    mediaRecorder.stop();
+  }
+  clearTimeout(recordingTimer);
+  stopCameraStream();
+  recordVideoButton.hidden = false;
+  takePhotoButton.hidden = false;
+  stopVideoButton.hidden = true;
+  if (cameraRecorder.open) cameraRecorder.close();
+}
+
+function stopCameraStream() {
+  cameraStream?.getTracks().forEach(track => track.stop());
+  cameraStream = undefined;
+  cameraPreview.srcObject = null;
 }
 
 function dismissCameraToast() {
