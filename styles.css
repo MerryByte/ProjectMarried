@@ -16,7 +16,7 @@ a { color: inherit; }
   display: grid;
   place-items: center;
   color: white;
-  background: url("public/couple-hero-centered.png") center / cover no-repeat;
+  background: url("public/couple-hero.webp") center / cover no-repeat;
 }
 
 .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,22,15,.58), rgba(10,22,15,.12) 65%), linear-gradient(0deg, rgba(8,19,12,.38), transparent 50%); }
@@ -85,7 +85,7 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
   .nav-links { display: flex; }
   .nav-links { gap: 16px; }
   .nav-links a:first-child { display: none; }
-  .hero { background-position: center; }
+  .hero { background-image: url("public/couple-hero-mobile.webp"); background-position: center; }
   .shade { background: linear-gradient(0deg, rgba(7,18,11,.63), rgba(7,18,11,.05) 75%); }
   .hero-copy { align-self: end; padding-bottom: 50px; }
   h1 { font-size: 64px; }

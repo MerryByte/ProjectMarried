@@ -7,9 +7,9 @@
   <meta name="description" content="Share your favorite moments from our wedding day.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="public/couple-hero-centered.png" as="image" fetchpriority="high">
+  <link rel="preload" href="public/couple-hero.webp" as="image" type="image/webp" imagesrcset="public/couple-hero-mobile.webp 900w, public/couple-hero.webp 1536w" imagesizes="100vw" fetchpriority="high">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
   <main>
@@ -39,14 +39,14 @@
       <h2>Help us remember<br>every little moment.</h2>
       <p class="intro">
         The happy tears, the dance moves, the moments we missed—
-        share your photos and videos from our day.
+        share your photos from our day.
       </p>
 
-      <div class="upload-gate" id="uploadGate">
+      <div class="upload-gate locked" id="uploadGate">
         <div class="actions">
           <button id="uploadButton">
             <span class="icon">▧</span>
-            <span><strong>Choose from library</strong><small>Photos and videos</small></span>
+            <span><strong>Choose from library</strong><small>Wedding photos</small></span>
             <b>→</b>
           </button>
           <button id="cameraButton">
@@ -56,11 +56,11 @@
           </button>
         </div>
         <p class="auto-upload-note"><span aria-hidden="true">✓</span> Camera photos upload automatically after capture.</p>
-        <div class="upload-lock" id="uploadLock" hidden>
+        <div class="upload-lock" id="uploadLock">
           <span class="lock-flourish" aria-hidden="true">A <i>&</i> E</span>
           <p class="eyebrow">The celebration begins soon</p>
           <h3>A glimpse of what's waiting</h3>
-          <p id="uploadLockMessage">Photo and video sharing will open on December 14, 2026.</p>
+          <p id="uploadLockMessage">Checking when photo sharing opens…</p>
         </div>
       </div>
 
@@ -93,6 +93,6 @@
     </section>
   </main>
   <script src="config.js"></script>
-  <script src="script.js?v=16"></script>
+  <script src="script.js?v=17"></script>
 </body>
 </html>

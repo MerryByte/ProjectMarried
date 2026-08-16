@@ -16,7 +16,7 @@ const cameraToastMessage = document.querySelector("#cameraToastMessage");
 const cameraToastClose = document.querySelector("#cameraToastClose");
 let selectedFiles = [];
 let uploadsUnlocked = false;
-let unlockMessage = "Photo and video sharing is not open yet.";
+let unlockMessage = "Photo sharing is not open yet.";
 let toastTimer;
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const RSVP_SESSION_KEY = "weddingRsvpSession";
@@ -38,8 +38,10 @@ async function addFiles(event, uploadImmediately = false) {
   const incomingFiles = [...event.target.files];
   const validFiles = incomingFiles.filter(file => file.type.startsWith("image/") && file.size <= MAX_FILE_SIZE);
   const rejectedCount = incomingFiles.length - validFiles.length;
+  if (validFiles.some(file => file.size > 1.5 * 1024 * 1024)) setStatus("Optimizing photos for a faster upload…");
+  const optimizedFiles = await Promise.all(validFiles.map(optimizeImage));
 
-  selectedFiles.push(...validFiles);
+  selectedFiles.push(...optimizedFiles);
   event.target.value = "";
   showFiles();
 
@@ -49,8 +51,27 @@ async function addFiles(event, uploadImmediately = false) {
     setStatus("");
   }
 
-  if (uploadImmediately && validFiles.length) {
-    await uploadFiles(validFiles);
+  if (uploadImmediately && optimizedFiles.length) {
+    await uploadFiles(optimizedFiles);
+  }
+}
+
+async function optimizeImage(file) {
+  if (file.size <= 1.5 * 1024 * 1024 || file.type === "image/gif") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 2560 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", .82));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp", lastModified: file.lastModified });
+  } catch (error) {
+    console.warn("Photo optimization skipped.", error);
+    return file;
   }
 }
 
@@ -133,7 +154,7 @@ async function initializeUploadGate() {
   uploadGate.classList.toggle("locked", !uploadsUnlocked);
   uploadLock.hidden = uploadsUnlocked;
   if (!uploadsUnlocked) {
-    unlockMessage = `Photo and video sharing opens ${new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeStyle: "short" }).format(unlockDate)}.`;
+    unlockMessage = `Photo sharing opens ${new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeStyle: "short" }).format(unlockDate)}.`;
     uploadLockMessage.textContent = unlockMessage;
     floatingCameraButton.setAttribute("aria-label", `Camera locked. ${unlockMessage}`);
   }
