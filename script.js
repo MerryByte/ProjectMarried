@@ -259,15 +259,25 @@ function getTouchDistance(touches) {
 
 async function takeHighResolutionPhoto() {
   if (!cameraStream || !cameraPreview.videoWidth) return;
+  takePhotoButton.disabled = true;
+  const readyMessage = cameraResolution.textContent;
   const canvas = document.createElement("canvas");
   canvas.width = cameraPreview.videoWidth;
   canvas.height = cameraPreview.videoHeight;
   canvas.getContext("2d").drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
   const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .95));
-  if (!blob) return;
+  if (!blob) {
+    takePhotoButton.disabled = false;
+    return;
+  }
   const file = new File([blob], `wedding-${Date.now()}.jpg`, { type: "image/jpeg" });
-  closeHighQualityCamera();
-  await uploadCapturedFile(file);
+  cameraResolution.textContent = "Photo captured · Uploading automatically…";
+  const uploaded = await uploadCapturedFile(file);
+  if (cameraStream) {
+    cameraResolution.textContent = uploaded ? "Photo uploaded · Ready for another" : "Upload failed · Photo kept for retry";
+    setTimeout(() => { if (cameraStream) cameraResolution.textContent = readyMessage; }, 1600);
+  }
+  takePhotoButton.disabled = false;
 }
 
 function startHighResolutionVideo() {
@@ -327,6 +337,7 @@ async function uploadCapturedFile(file) {
   selectedFiles.push(file);
   showFiles();
   await uploadFiles([file]);
+  return !selectedFiles.includes(file);
 }
 
 function closeHighQualityCamera() {
@@ -340,6 +351,7 @@ function closeHighQualityCamera() {
   recordVideoButton.hidden = false;
   takePhotoButton.hidden = false;
   stopVideoButton.hidden = true;
+  takePhotoButton.disabled = false;
   recordingDuration.hidden = true;
   cameraZoomControl.hidden = true;
   if (cameraRecorder.open) cameraRecorder.close();
