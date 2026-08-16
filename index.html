@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#203127">
   <title>Anatoliy & Elizabeth | 12.14.26</title>
   <meta name="description" content="Share your favorite moments from our wedding day.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="public/couple-hero.webp" as="image" type="image/webp" imagesrcset="public/couple-hero-mobile.webp 900w, public/couple-hero.webp 1536w" imagesizes="100vw" fetchpriority="high">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
   <main>
@@ -17,7 +19,8 @@
       <div class="shade"></div>
       <nav>
         <a class="monogram" href="#" aria-label="Home">A <i>&</i> E</a>
-        <div class="nav-links">
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mainNav">Menu</button>
+        <div class="nav-links" id="mainNav">
           <a href="#schedule">Schedule</a>
           <a href="rsvp.html#photos">Photos</a>
           <a href="rsvp.html">RSVP</a>
@@ -116,6 +119,7 @@
     </section>
   </main>
   <script src="config.js"></script>
-  <script src="script.js?v=27"></script>
+  <script src="nav.js?v=1"></script>
+  <script src="script.js?v=28"></script>
 </body>
 </html>

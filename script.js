@@ -54,7 +54,7 @@ const RSVP_SESSION_KEY = "weddingRsvpSession";
 const DEFAULT_UNLOCK_AT = "2026-12-14T08:00:00.000Z";
 
 uploadButton.addEventListener("click", () => openPicker(uploadInput));
-cameraButton.addEventListener("click", () => openHighQualityCamera(false));
+cameraButton.addEventListener("click", () => openHighQualityCamera(true));
 floatingCameraButton.addEventListener("click", () => openHighQualityCamera(true));
 cameraToastClose.addEventListener("click", dismissCameraToast);
 cameraRecorderClose.addEventListener("click", closeHighQualityCamera);
@@ -194,7 +194,12 @@ async function openHighQualityCamera(showToast = false) {
     cameraInput.click();
     return;
   }
-  cameraRecorder.showModal();
+  try {
+    cameraRecorder.showModal();
+  } catch {
+    cameraInput.click();
+    return;
+  }
   cameraResolution.textContent = "Starting high-quality camera…";
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
@@ -227,7 +232,8 @@ async function openHighQualityCamera(showToast = false) {
     }
   } catch (error) {
     closeHighQualityCamera();
-    setStatus("High-quality camera could not open. Check camera and microphone permissions, or choose from your library.", "error");
+    setStatus("High-quality camera could not open. Opening your phone camera instead.", "error");
+    cameraInput.click();
   }
 }
 
@@ -448,7 +454,7 @@ async function initializeUploadGate() {
   uploadGate.classList.toggle("locked", !uploadsUnlocked);
   uploadLock.hidden = uploadsUnlocked;
   if (!uploadsUnlocked) {
-    unlockMessage = `Photo sharing opens ${new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeStyle: "short" }).format(unlockDate)}.`;
+    unlockMessage = `Photo sharing opens ${new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", month:"long", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit" }).format(unlockDate)}.`;
     uploadLockMessage.textContent = unlockMessage;
     floatingCameraButton.setAttribute("aria-label", `Camera locked. ${unlockMessage}`);
   }
@@ -467,8 +473,8 @@ async function initializeSchedule() {
     const weddingDate = new Date(rows[0].upload_unlock_at);
     if (Number.isFinite(weddingDate.getTime())) {
       const options = { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric" };
-      document.querySelector("#weddingDateShort").textContent = new Intl.DateTimeFormat(undefined, options).format(weddingDate);
-      document.querySelector("#weddingDateLong").textContent = new Intl.DateTimeFormat(undefined, { ...options, month: "long" }).format(weddingDate);
+      document.querySelector("#weddingDateShort").textContent = new Intl.DateTimeFormat("en-US", options).format(weddingDate);
+      document.querySelector("#weddingDateLong").textContent = new Intl.DateTimeFormat("en-US", { ...options, month: "long" }).format(weddingDate);
     }
     for (const event of ["ceremony", "celebration"]) {
       const time = rows[0][`${event}_time`];
@@ -482,9 +488,10 @@ async function initializeSchedule() {
 }
 
 function formatScheduleTime(value) {
-  const [hours, minutes] = value.split(":").map(Number);
-  const date = new Date(2000, 0, 1, hours, minutes);
-  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date);
+  const match = /^(\d{1,2}):(\d{2})/.exec(value || "");
+  if (!match) return value || "Time to be announced";
+  const hours = Number(match[1]);
+  return `${hours % 12 || 12}:${match[2]} ${hours >= 12 ? "PM" : "AM"}`;
 }
 
 async function getUploadConfig() {

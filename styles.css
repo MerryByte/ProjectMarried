@@ -1,4 +1,5 @@
 :root {
+  color-scheme: only light;
   --cream: #f5f0e7;
   --ink: #203127;
   --sage: #637565;
@@ -6,6 +7,7 @@
 }
 
 * { box-sizing: border-box; }
+button, input, textarea, select { font: inherit; color: inherit; }
 html { scroll-behavior: smooth; }
 html, body { touch-action: pan-x pan-y; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: "DM Sans", sans-serif; }
@@ -30,6 +32,7 @@ align-items: center;
 gap: 0;
 }
 .nav-links a + a { margin-left:20px; padding-left:20px; border-left:1px solid rgba(255,255,255,.58); }
+.nav-toggle { display:none; border:1px solid rgba(255,255,255,.45); border-radius:20px; padding:9px 13px; color:white; background:rgba(255,255,255,.1); text-transform:uppercase; letter-spacing:.12em; font-size:10px; }
 .monogram { font: 600 25px "Cormorant Garamond", serif; letter-spacing: .1em; }
 .monogram i { font-size: 14px; }
 .hero-copy { position: relative; z-index: 1; text-align: center; padding: 100px 24px 20px; }
@@ -123,9 +126,11 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 @media (max-width: 680px) {
   .camera-recorder-actions { padding-bottom:calc(20px + env(safe-area-inset-bottom,0px)); }
   nav { height: 76px; padding: 0 22px; }
-  .nav-links { display: flex; }
-  .nav-links a { font-size:10px; letter-spacing:.1em; }
-  .nav-links a + a { margin-left:9px; padding-left:9px; }
+  .nav-toggle { display:block; }
+  .nav-links { position:absolute; top:calc(100% + 8px); right:12px; width:min(210px,calc(100vw - 24px)); padding:8px; display:flex; flex-direction:column; align-items:stretch; border:1px solid rgba(255,255,255,.3); border-radius:14px; background:rgba(20,35,25,.96); box-shadow:0 16px 38px rgba(7,18,11,.28); opacity:0; visibility:hidden; transform:translateY(-8px); transition:.18s ease; }
+  .nav-links.open { opacity:1; visibility:visible; transform:none; }
+  .nav-links a { padding:13px 14px; font-size:11px; letter-spacing:.12em; }
+  .nav-links a + a { margin-left:0; padding-left:14px; border-left:0; border-top:1px solid rgba(255,255,255,.2); }
   .hero { background-image: url("public/couple-hero-mobile.webp"); background-position: center; }
   .shade { background: linear-gradient(0deg, rgba(7,18,11,.63), rgba(7,18,11,.05) 75%); }
   .hero-copy { align-self: end; padding-bottom: 50px; }
@@ -140,9 +145,9 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
   .actions { grid-template-columns: 1fr; width: 100%; }
   .floating-camera {
     position: fixed;
-    z-index: 20;
+    z-index: 35;
     right: 20px;
-    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    bottom: max(22px, env(safe-area-inset-bottom, 0px));
     width: 62px;
     height: 62px;
     display: grid;
@@ -154,9 +159,12 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
     background: var(--ink);
     box-shadow: 0 10px 28px rgba(18,35,25,.3);
     cursor: pointer;
+    overflow: visible;
     -webkit-tap-highlight-color: transparent;
   }
   .floating-camera:active { transform: scale(.95); }
   .floating-camera:focus-visible { outline: 3px solid white; outline-offset: 3px; }
-  .floating-camera svg { width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .floating-camera svg { display:block; width:30px; height:30px; overflow:visible; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
 }
+
+@supports not (height: 100dvh) { .camera-recorder { height:100vh; } }
