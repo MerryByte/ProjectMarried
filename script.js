@@ -13,12 +13,12 @@ document.querySelector("#uploadButton").addEventListener("click", () => uploadIn
 document.querySelector("#cameraButton").addEventListener("click", () => cameraInput.click());
 document.querySelector("#floatingCameraButton").addEventListener("click", () => cameraInput.click());
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
-submitButton.addEventListener("click", uploadFiles);
+submitButton.addEventListener("click", () => uploadFiles());
 
 uploadInput.addEventListener("change", addFiles);
-cameraInput.addEventListener("change", addFiles);
+cameraInput.addEventListener("change", event => addFiles(event, true));
 
-function addFiles(event) {
+async function addFiles(event, uploadImmediately = false) {
   const incomingFiles = [...event.target.files];
   const validFiles = incomingFiles.filter(file => file.type.startsWith("image/") && file.size <= MAX_FILE_SIZE);
   const rejectedCount = incomingFiles.length - validFiles.length;
@@ -31,6 +31,10 @@ function addFiles(event) {
     setStatus(`${rejectedCount} file${rejectedCount === 1 ? " was" : "s were"} skipped. Choose images up to 15 MB each.`, "error");
   } else {
     setStatus("");
+  }
+
+  if (uploadImmediately && validFiles.length) {
+    await uploadFiles(validFiles);
   }
 }
 
@@ -47,11 +51,12 @@ function showFiles() {
   selectionNames.textContent = selectedFiles.map(file => file.name).join(", ");
 }
 
-async function uploadFiles() {
-  if (!selectedFiles.length) return;
+async function uploadFiles(files = selectedFiles) {
+  if (!files.length) return;
 
   submitButton.disabled = true;
-  const filesToUpload = [...selectedFiles];
+  const filesToUpload = [...files];
+  const uploadedFiles = [];
 
   try {
     const config = await getUploadConfig();
@@ -60,13 +65,16 @@ async function uploadFiles() {
     for (let index = 0; index < filesToUpload.length; index += 1) {
       setStatus(`Uploading ${index + 1} of ${filesToUpload.length}${uploader.familyName ? ` as ${uploader.familyName}` : ""}…`);
       await uploadFile(filesToUpload[index], config, uploader);
+      uploadedFiles.push(filesToUpload[index]);
     }
 
-    selectedFiles = [];
+    selectedFiles = selectedFiles.filter(file => !uploadedFiles.includes(file));
     showFiles();
     setStatus(`${filesToUpload.length} ${filesToUpload.length === 1 ? "memory was" : "memories were"} uploaded. Thank you!`, "success");
   } catch (error) {
     console.error(error);
+    selectedFiles = selectedFiles.filter(file => !uploadedFiles.includes(file));
+    showFiles();
     setStatus(error.message || "The upload failed. Please try again.", "error");
   } finally {
     submitButton.disabled = false;
