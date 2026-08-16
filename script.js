@@ -24,6 +24,7 @@ const stopVideoButton = document.querySelector("#stopVideoButton");
 const cameraZoomControl = document.querySelector("#cameraZoomControl");
 const cameraZoom = document.querySelector("#cameraZoom");
 const cameraZoomValue = document.querySelector("#cameraZoomValue");
+const recordingDuration = document.querySelector("#recordingDuration");
 let selectedFiles = [];
 let uploadsUnlocked = false;
 let unlockMessage = "Photo sharing is not open yet.";
@@ -32,7 +33,11 @@ let cameraStream;
 let mediaRecorder;
 let recordedChunks = [];
 let recordingTimer;
+let recordingClock;
+let recordingStartedAt;
 let discardRecording = false;
+let pinchStartDistance;
+let pinchStartZoom;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const MAX_FILES_PER_BATCH = 20;
@@ -49,6 +54,9 @@ takePhotoButton.addEventListener("click", takeHighResolutionPhoto);
 recordVideoButton.addEventListener("click", startHighResolutionVideo);
 stopVideoButton.addEventListener("click", stopHighResolutionVideo);
 cameraZoom.addEventListener("input", applyCameraZoom);
+cameraPreview.addEventListener("touchstart", startCameraPinch, { passive: false });
+cameraPreview.addEventListener("touchmove", moveCameraPinch, { passive: false });
+cameraPreview.addEventListener("touchend", endCameraPinch);
 cameraRecorder.addEventListener("cancel", event => { event.preventDefault(); closeHighQualityCamera(); });
 window.addEventListener("pagehide", stopCameraStream);
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
@@ -201,6 +209,7 @@ async function openHighQualityCamera(showToast = false) {
       cameraZoom.value = settings.zoom || capabilities.zoom.min;
       cameraZoomValue.value = `${Number(cameraZoom.value).toFixed(1)}×`;
       cameraZoomControl.hidden = false;
+      cameraResolution.textContent += " · Pinch to zoom";
     } else {
       cameraZoomControl.hidden = true;
     }
@@ -220,6 +229,32 @@ async function applyCameraZoom() {
   } catch (error) {
     console.warn("Camera zoom is unavailable.", error);
   }
+}
+
+function startCameraPinch(event) {
+  if (event.touches.length !== 2 || cameraZoomControl.hidden) return;
+  event.preventDefault();
+  pinchStartDistance = getTouchDistance(event.touches);
+  pinchStartZoom = Number(cameraZoom.value);
+}
+
+function moveCameraPinch(event) {
+  if (event.touches.length !== 2 || !pinchStartDistance || cameraZoomControl.hidden) return;
+  event.preventDefault();
+  const ratio = getTouchDistance(event.touches) / pinchStartDistance;
+  const minimum = Number(cameraZoom.min);
+  const maximum = Number(cameraZoom.max);
+  cameraZoom.value = Math.min(maximum, Math.max(minimum, pinchStartZoom * ratio));
+  applyCameraZoom();
+}
+
+function endCameraPinch() {
+  pinchStartDistance = undefined;
+  pinchStartZoom = undefined;
+}
+
+function getTouchDistance(touches) {
+  return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
 }
 
 async function takeHighResolutionPhoto() {
@@ -256,8 +291,16 @@ function startHighResolutionVideo() {
   recordVideoButton.hidden = true;
   takePhotoButton.hidden = true;
   stopVideoButton.hidden = false;
-  cameraResolution.textContent = "Recording in high quality · 45 seconds maximum";
+  recordingStartedAt = Date.now();
+  recordingDuration.hidden = false;
+  updateRecordingDuration();
+  recordingClock = setInterval(updateRecordingDuration, 250);
   recordingTimer = setTimeout(stopHighResolutionVideo, 45000);
+}
+
+function updateRecordingDuration() {
+  const seconds = Math.min(45, Math.floor((Date.now() - recordingStartedAt) / 1000));
+  recordingDuration.textContent = `Recording · 00:${String(seconds).padStart(2, "0")} / 00:45`;
 }
 
 function stopHighResolutionVideo() {
@@ -266,6 +309,7 @@ function stopHighResolutionVideo() {
 
 async function finishHighResolutionVideo() {
   clearTimeout(recordingTimer);
+  clearInterval(recordingClock);
   if (discardRecording) return;
   const type = (mediaRecorder.mimeType || recordedChunks[0]?.type || "video/webm").split(";")[0];
   const blob = new Blob(recordedChunks, { type });
@@ -291,10 +335,12 @@ function closeHighQualityCamera() {
     mediaRecorder.stop();
   }
   clearTimeout(recordingTimer);
+  clearInterval(recordingClock);
   stopCameraStream();
   recordVideoButton.hidden = false;
   takePhotoButton.hidden = false;
   stopVideoButton.hidden = true;
+  recordingDuration.hidden = true;
   cameraZoomControl.hidden = true;
   if (cameraRecorder.open) cameraRecorder.close();
 }

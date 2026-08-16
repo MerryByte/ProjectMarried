@@ -7,6 +7,7 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+html, body { touch-action: pan-x pan-y; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: "DM Sans", sans-serif; }
 a { color: inherit; }
 
@@ -93,8 +94,10 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 .camera-recorder { inset:0; width:100vw; max-width:none; height:100dvh; max-height:none; margin:0; padding:0; border:0; border-radius:0; overflow:hidden; color:white; background:#0d1510; }
 .camera-recorder[open] { display:flex; flex-direction:column; }
 .camera-recorder::backdrop { background:rgba(5,10,7,.88); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
-.camera-recorder video { display:block; width:100%; min-height:0; flex:1; object-fit:cover; background:#050705; }
+.camera-recorder video { display:block; width:100%; min-height:0; flex:1; object-fit:cover; background:#050705; touch-action:none; }
 .camera-recorder>p { margin:0; padding:12px 20px 0; color:#cdd5cf; font-size:12px; text-align:center; }
+.camera-recorder>.recording-duration { color:#fff; font-weight:600; font-variant-numeric:tabular-nums; }
+.camera-recorder>.recording-duration[hidden] { display:none; }
 .camera-recorder-close { position:absolute; z-index:2; top:12px; right:12px; width:42px; height:42px; border:1px solid rgba(255,255,255,.35); border-radius:50%; color:white; background:rgba(13,21,16,.72); font-size:29px; cursor:pointer; }
 .camera-recorder-actions { display:flex; justify-content:center; gap:10px; padding:16px 18px 20px; }
 .camera-recorder-actions button { min-height:48px; padding:0 20px; border:1px solid rgba(255,255,255,.55); border-radius:24px; color:white; background:rgba(255,255,255,.12); font:600 11px "DM Sans",sans-serif; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; }
