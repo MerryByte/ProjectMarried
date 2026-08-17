@@ -44,6 +44,8 @@ let recordingStartedAt;
 let discardRecording = false;
 let pinchStartDistance;
 let pinchStartZoom;
+let hardwareCameraZoom = false;
+let digitalCameraZoom = 1;
 let lastCapturedFile;
 let captureFeedbackTimer;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
@@ -198,7 +200,9 @@ async function openHighQualityCamera(showToast = false) {
     return;
   }
   try {
-    cameraRecorder.showModal();
+    cameraRecorder.setAttribute("open", "");
+    cameraRecorder.classList.add("active");
+    document.documentElement.classList.add("camera-open");
   } catch {
     cameraInput.click();
     return;
@@ -222,7 +226,8 @@ async function openHighQualityCamera(showToast = false) {
       ? `Recording at ${settings.width} × ${settings.height}`
       : "High-quality camera ready";
     const capabilities = videoTrack && videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
-    if (capabilities && capabilities.zoom) {
+    hardwareCameraZoom = !!(capabilities && capabilities.zoom);
+    if (hardwareCameraZoom) {
       cameraZoom.min = capabilities.zoom.min;
       cameraZoom.max = capabilities.zoom.max;
       cameraZoom.step = capabilities.zoom.step || .1;
@@ -231,7 +236,14 @@ async function openHighQualityCamera(showToast = false) {
       cameraZoomControl.hidden = false;
       cameraResolution.textContent += " · Pinch to zoom";
     } else {
-      cameraZoomControl.hidden = true;
+      digitalCameraZoom = 1;
+      cameraZoom.min = 1;
+      cameraZoom.max = 3;
+      cameraZoom.step = .1;
+      cameraZoom.value = 1;
+      cameraZoomValue.value = "1.0×";
+      cameraZoomControl.hidden = false;
+      cameraResolution.textContent += " · Digital pinch to zoom";
     }
   } catch (error) {
     closeHighQualityCamera();
@@ -245,6 +257,11 @@ async function applyCameraZoom() {
   if (!track) return;
   const zoom = Number(cameraZoom.value);
   cameraZoomValue.value = `${zoom.toFixed(1)}×`;
+  if (!hardwareCameraZoom) {
+    digitalCameraZoom = zoom;
+    cameraPreview.style.transform = `scale(${zoom})`;
+    return;
+  }
   try {
     await track.applyConstraints({ advanced: [{ zoom }] });
   } catch (error) {
@@ -285,7 +302,15 @@ async function takeHighResolutionPhoto() {
   const canvas = document.createElement("canvas");
   canvas.width = cameraPreview.videoWidth;
   canvas.height = cameraPreview.videoHeight;
-  canvas.getContext("2d").drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+  if (!hardwareCameraZoom && digitalCameraZoom > 1) {
+    const sourceWidth = cameraPreview.videoWidth / digitalCameraZoom;
+    const sourceHeight = cameraPreview.videoHeight / digitalCameraZoom;
+    const sourceX = (cameraPreview.videoWidth - sourceWidth) / 2;
+    const sourceY = (cameraPreview.videoHeight - sourceHeight) / 2;
+    canvas.getContext("2d").drawImage(cameraPreview, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+  } else {
+    canvas.getContext("2d").drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+  }
   const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .95));
   if (!blob) {
     takePhotoButton.disabled = false;
@@ -424,7 +449,12 @@ function closeHighQualityCamera() {
   captureFeedback.hidden = true;
   clearTimeout(captureFeedbackTimer);
   cameraZoomControl.hidden = true;
-  if (cameraRecorder.open) cameraRecorder.close();
+  hardwareCameraZoom = false;
+  digitalCameraZoom = 1;
+  cameraPreview.style.transform = "";
+  cameraRecorder.classList.remove("active");
+  cameraRecorder.removeAttribute("open");
+  document.documentElement.classList.remove("camera-open");
 }
 
 function stopCameraStream() {
