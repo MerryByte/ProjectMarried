@@ -172,6 +172,9 @@ async function addMyPhoto(file) {
   const url = URL.createObjectURL(mediaBlob);
   photoObjectUrls.push(url);
   if (isVideo) {
+    const createPoster = () => createVideoPoster(media);
+    media.addEventListener("loadeddata", createPoster, { once: true });
+    media.addEventListener("seeked", createPoster, { once: true });
     media.addEventListener("loadedmetadata", () => {
       try {
         if (Number.isFinite(media.duration) && media.duration > .2) {
@@ -181,6 +184,18 @@ async function addMyPhoto(file) {
     }, { once: true });
   }
   media.src = url;
+}
+
+function createVideoPoster(video) {
+  if (!video.videoWidth || !video.videoHeight) return;
+  try {
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 640 / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    video.poster = canvas.toDataURL("image/jpeg", .78);
+  } catch {}
 }
 
 async function downloadMyPhoto(event, file) {

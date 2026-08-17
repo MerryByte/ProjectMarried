@@ -430,7 +430,10 @@ async function loadPhotoPreview(index) {
     entry.thumbnailUrl = objectUrl;
     if (isFullSize) entry.fullUrl = objectUrl;
     if (isVideo) {
-      const showVideoPreview = () => entry.media.classList.add("loaded");
+      const showVideoPreview = () => {
+        createVideoPoster(entry.media);
+        entry.media.classList.add("loaded");
+      };
       entry.media.addEventListener("loadeddata", showVideoPreview, { once: true });
       entry.media.addEventListener("seeked", showVideoPreview, { once: true });
       entry.media.addEventListener("loadedmetadata", () => {
@@ -455,6 +458,18 @@ async function loadPhotoPreview(index) {
   });
 
   return entry.previewPromise;
+}
+
+function createVideoPoster(video) {
+  if (!video.videoWidth || !video.videoHeight) return;
+  try {
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 640 / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    video.poster = canvas.toDataURL("image/jpeg", .78);
+  } catch {}
 }
 
 async function loadFullPhoto(index) {
