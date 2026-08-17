@@ -9,6 +9,7 @@ const myPhotosSection = document.querySelector("#myPhotosSection");
 const myPhotosStatus = document.querySelector("#myPhotosStatus");
 const myPhotosGrid = document.querySelector("#myPhotosGrid");
 const RSVP_SESSION_KEY = "weddingRsvpSession";
+const ACCOUNT_SECTION_KEY = "weddingAccountSection";
 let session = null;
 let config = null;
 let photosLoaded = false;
@@ -70,7 +71,9 @@ async function openAccount() {
   accountTabs.hidden = false;
   rsvpSection.hidden = false;
   logoutButton.hidden = false;
-  if (location.hash === "#photos") await switchSection("photos");
+  let preferredSection = "rsvp";
+  try { preferredSection = localStorage.getItem(ACCOUNT_SECTION_KEY) || preferredSection; } catch {}
+  if (location.hash === "#photos" || preferredSection === "photos") await switchSection("photos");
 
   const response = await api(`/rest/v1/rsvps?select=*&user_id=eq.${encodeURIComponent(session.user.id)}`, { headers: authHeaders() });
   if (!response.ok) return;
@@ -86,6 +89,7 @@ async function openAccount() {
 
 async function switchSection(section) {
   const showPhotos = section === "photos";
+  try { localStorage.setItem(ACCOUNT_SECTION_KEY, showPhotos ? "photos" : "rsvp"); } catch {}
   rsvpTab.classList.toggle("active", !showPhotos);
   photosTab.classList.toggle("active", showPhotos);
   rsvpSection.hidden = showPhotos;

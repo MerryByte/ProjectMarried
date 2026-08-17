@@ -51,12 +51,13 @@ const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const MAX_FILES_PER_BATCH = 20;
 const MAX_UPLOAD_ATTEMPTS = 3;
 const RSVP_SESSION_KEY = "weddingRsvpSession";
+const CAMERA_NOTICE_KEY = "weddingCameraNoticeDismissed";
 const DEFAULT_UNLOCK_AT = "2026-12-14T08:00:00.000Z";
 
 uploadButton.addEventListener("click", () => openPicker(uploadInput));
 cameraButton.addEventListener("click", () => openHighQualityCamera(true));
 floatingCameraButton.addEventListener("click", () => openHighQualityCamera(true));
-cameraToastClose.addEventListener("click", dismissCameraToast);
+cameraToastClose.addEventListener("click", () => dismissCameraToast(true));
 cameraRecorderClose.addEventListener("click", closeHighQualityCamera);
 takePhotoButton.addEventListener("click", takeHighResolutionPhoto);
 recordVideoButton.addEventListener("click", startHighResolutionVideo);
@@ -176,15 +177,16 @@ function openPicker(input, showToast = false) {
     return;
   }
   if (!showToast) return;
+  if (cameraNoticeWasDismissed()) return;
   cameraToastMessage.textContent = unlockMessage;
   cameraToast.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(dismissCameraToast, 5000);
+  toastTimer = setTimeout(() => dismissCameraToast(false), 5000);
 }
 
 async function openHighQualityCamera(showToast = false) {
   if (!uploadsUnlocked) {
-    if (showToast) {
+    if (showToast && !cameraNoticeWasDismissed()) {
       cameraToastMessage.textContent = unlockMessage;
       cameraToast.hidden = false;
     }
@@ -430,9 +432,16 @@ function stopCameraStream() {
   cameraPreview.srcObject = null;
 }
 
-function dismissCameraToast() {
+function dismissCameraToast(remember = false) {
   cameraToast.hidden = true;
   clearTimeout(toastTimer);
+  if (remember && unlockMessage) {
+    try { localStorage.setItem(CAMERA_NOTICE_KEY, unlockMessage); } catch {}
+  }
+}
+
+function cameraNoticeWasDismissed() {
+  try { return localStorage.getItem(CAMERA_NOTICE_KEY) === unlockMessage; } catch { return false; }
 }
 
 async function initializeUploadGate() {
