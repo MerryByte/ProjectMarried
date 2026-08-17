@@ -140,7 +140,7 @@ async function addMyPhoto(file) {
   const media = document.createElement(isVideo ? "video" : "img");
   if (isVideo) {
     media.controls = true;
-    media.preload = "metadata";
+    media.preload = "auto";
     media.playsInline = true;
   } else {
     media.alt = "Your wedding photo";
@@ -166,6 +166,15 @@ async function addMyPhoto(file) {
   }
   const url = URL.createObjectURL(await response.blob());
   photoObjectUrls.push(url);
+  if (isVideo) {
+    media.addEventListener("loadedmetadata", () => {
+      try {
+        if (Number.isFinite(media.duration) && media.duration > .2) {
+          media.currentTime = Math.min(1, media.duration / 10);
+        }
+      } catch {}
+    }, { once: true });
+  }
   media.src = url;
 }
 
