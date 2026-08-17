@@ -301,8 +301,9 @@ function addPhoto(config, token, photo, familyName) {
     card.classList.toggle("selected", selectInput.checked);
     updatePhotoSelectionControls();
   });
-  selectLabel.append(selectInput);
-  card.append(selectLabel);
+  const selectText = document.createElement("span");
+  selectText.textContent = "Select";
+  selectLabel.append(selectInput, selectText);
   const isVideo = photo.metadata?.mimetype?.startsWith("video/");
   const media = document.createElement(isVideo ? "video" : "img");
   if (isVideo) {
@@ -316,15 +317,22 @@ function addPhoto(config, token, photo, familyName) {
   }
   const download = document.createElement("a");
   download.href = "#";
-  download.textContent = "Download";
+  download.className = "photo-download";
+  download.textContent = "↓ Download";
   const photoIndex = galleryPhotos.push({ config, token, photo, familyName, media, thumbnailUrl: null, fullUrl: null, previewPromise: null, fullPromise: null }) - 1;
   media.dataset.photoIndex = photoIndex;
   download.addEventListener("click", event => downloadPhoto(event, photoIndex));
   const uploader = document.createElement("p");
   uploader.className = "photo-uploader";
   uploader.textContent = familyName;
+  const footer = document.createElement("div");
+  footer.className = "photo-footer";
+  const actions = document.createElement("div");
+  actions.className = "photo-actions";
+  actions.append(selectLabel, download);
+  footer.append(uploader, actions);
   if (isVideo) {
-    card.append(media, download, uploader);
+    card.append(media, footer);
   } else {
     const viewButton = document.createElement("button");
     viewButton.className = "photo-view";
@@ -332,7 +340,7 @@ function addPhoto(config, token, photo, familyName) {
     viewButton.setAttribute("aria-label", "View photo full size");
     viewButton.addEventListener("click", () => openLightbox(photoIndex));
     viewButton.append(media);
-    card.append(viewButton, download, uploader);
+    card.append(viewButton, footer);
   }
   photoGrid.append(card);
   thumbnailObserver.observe(media);
