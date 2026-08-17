@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="gallery.css?v=14">
+  <link rel="stylesheet" href="gallery.css?v=15">
 </head>
 <body>
   <header>
@@ -50,7 +50,7 @@
           <p class="eyebrow">Guest memories</p>
           <h1>Our gallery</h1>
         </div>
-        <p id="photoCount"></p>
+        <div class="gallery-summary"><p id="photoCount"></p><div class="gallery-controls"><button id="selectAllPhotos" type="button">Select visible</button><button id="clearPhotoSelection" type="button" hidden>Clear</button><button class="danger" id="deleteSelectedPhotos" type="button" hidden>Delete selected</button></div></div>
       </div>
       <p class="status" id="galleryStatus" role="status" aria-live="polite">Loading photos…</p>
       <div class="photo-grid" id="photoGrid"></div>
@@ -96,6 +96,6 @@
 
   <script src="config.js?v=2"></script>
   <script src="nav.js?v=2"></script>
-  <script src="gallery.js?v=18"></script>
+  <script src="gallery.js?v=19"></script>
 </body>
 </html>

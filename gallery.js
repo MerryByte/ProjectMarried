@@ -6,6 +6,9 @@ const galleryStatus = document.querySelector("#galleryStatus");
 const photoGrid = document.querySelector("#photoGrid");
 const photoCount = document.querySelector("#photoCount");
 const loadMoreButton = document.querySelector("#loadMoreButton");
+const selectAllPhotos = document.querySelector("#selectAllPhotos");
+const clearPhotoSelection = document.querySelector("#clearPhotoSelection");
+const deleteSelectedPhotos = document.querySelector("#deleteSelectedPhotos");
 const logoutButton = document.querySelector("#logoutButton");
 const adminTabs = document.querySelector("#adminTabs");
 const photosTab = document.querySelector("#photosTab");
@@ -35,6 +38,7 @@ let activeSession;
 let thumbnailObserver;
 let pendingGalleryPhotos = [];
 let renderedPhotoCount = 0;
+const selectedPhotoPaths = new Set();
 const GALLERY_PAGE_SIZE = 24;
 const ADMIN_SESSION_KEY = "weddingGallerySession";
 
@@ -45,6 +49,9 @@ reservationsTab.addEventListener("click", () => switchView("reservations"));
 settingsTab.addEventListener("click", () => switchView("settings"));
 settingsForm.addEventListener("submit", saveUploadSettings);
 loadMoreButton.addEventListener("click", renderNextPhotos);
+selectAllPhotos.addEventListener("click", selectVisiblePhotos);
+clearPhotoSelection.addEventListener("click", clearSelectedPhotos);
+deleteSelectedPhotos.addEventListener("click", deleteSelectedPhotoObjects);
 lightboxClose.addEventListener("click", closeLightbox);
 lightboxPrevious.addEventListener("click", () => showLightboxPhoto(activePhotoIndex - 1));
 lightboxNext.addEventListener("click", () => showLightboxPhoto(activePhotoIndex + 1));
@@ -104,6 +111,8 @@ async function showGallery(config, token) {
 
     photoGrid.replaceChildren();
     galleryPhotos = [];
+    selectedPhotoPaths.clear();
+    updatePhotoSelectionControls();
     photoCount.textContent = `${photos.length} ${photos.length === 1 ? "memory" : "memories"}`;
     galleryStatus.textContent = photos.length ? "" : "No photos or videos have been uploaded yet.";
 
@@ -280,6 +289,20 @@ async function listFolder(config, token, prefix) {
 function addPhoto(config, token, photo, familyName) {
   const card = document.createElement("article");
   card.className = "photo";
+  const selectLabel = document.createElement("label");
+  selectLabel.className = "photo-select";
+  const selectInput = document.createElement("input");
+  selectInput.type = "checkbox";
+  selectInput.setAttribute("aria-label", `Select ${photo.name}`);
+  selectInput.dataset.path = photo.path;
+  selectInput.addEventListener("change", () => {
+    if (selectInput.checked) selectedPhotoPaths.add(photo.path);
+    else selectedPhotoPaths.delete(photo.path);
+    card.classList.toggle("selected", selectInput.checked);
+    updatePhotoSelectionControls();
+  });
+  selectLabel.append(selectInput);
+  card.append(selectLabel);
   const isVideo = photo.metadata?.mimetype?.startsWith("video/");
   const media = document.createElement(isVideo ? "video" : "img");
   if (isVideo) {
@@ -313,6 +336,60 @@ function addPhoto(config, token, photo, familyName) {
   }
   photoGrid.append(card);
   thumbnailObserver.observe(media);
+}
+
+function updatePhotoSelectionControls() {
+  const count = selectedPhotoPaths.size;
+  clearPhotoSelection.hidden = count === 0;
+  deleteSelectedPhotos.hidden = count === 0;
+  deleteSelectedPhotos.textContent = count ? `Delete selected (${count})` : "Delete selected";
+}
+
+function selectVisiblePhotos() {
+  photoGrid.querySelectorAll(".photo-select input").forEach(input => {
+    input.checked = true;
+    selectedPhotoPaths.add(input.dataset.path);
+    input.closest(".photo").classList.add("selected");
+  });
+  updatePhotoSelectionControls();
+}
+
+function clearSelectedPhotos() {
+  selectedPhotoPaths.clear();
+  photoGrid.querySelectorAll(".photo-select input").forEach(input => {
+    input.checked = false;
+    input.closest(".photo").classList.remove("selected");
+  });
+  updatePhotoSelectionControls();
+}
+
+async function deleteSelectedPhotoObjects() {
+  const paths = [...selectedPhotoPaths];
+  if (!paths.length || !confirm(`Permanently delete ${paths.length} selected ${paths.length === 1 ? "memory" : "memories"}? This cannot be undone.`)) return;
+  deleteSelectedPhotos.disabled = true;
+  galleryStatus.className = "status";
+  galleryStatus.textContent = `Deleting ${paths.length} ${paths.length === 1 ? "memory" : "memories"}…`;
+  try {
+    const bucket = activeConfig.bucket || "wedding-uploads";
+    const response = await fetch(`${activeConfig.supabaseUrl}/storage/v1/object/${encodeURIComponent(bucket)}`, {
+      method: "DELETE",
+      headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ prefixes: paths }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `Unable to delete selected memories (${response.status}).`);
+    if (photoLightbox.open) closeLightbox();
+    thumbnailObserver?.disconnect();
+    objectUrls.forEach(URL.revokeObjectURL);
+    objectUrls = [];
+    await showGallery(activeConfig, activeToken);
+    galleryStatus.className = "status success";
+    galleryStatus.textContent = `${paths.length} ${paths.length === 1 ? "memory was" : "memories were"} permanently deleted.`;
+  } catch (error) {
+    galleryStatus.textContent = error.message;
+  } finally {
+    deleteSelectedPhotos.disabled = false;
+  }
 }
 
 async function loadPhotoPreview(index) {
