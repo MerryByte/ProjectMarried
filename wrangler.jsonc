@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "projectmarried",
+  "main": "./server/index.js",
   "compatibility_date": "2026-08-16",
   "assets": {
     "directory": "./dist"

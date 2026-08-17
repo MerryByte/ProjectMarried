@@ -186,7 +186,7 @@ function openPicker(input, showToast = false) {
 
 async function openHighQualityCamera(showToast = false) {
   if (!uploadsUnlocked) {
-    if (showToast && !cameraNoticeWasDismissed()) {
+    if (showToast) {
       cameraToastMessage.textContent = unlockMessage;
       cameraToast.hidden = false;
     }
@@ -448,10 +448,7 @@ async function initializeUploadGate() {
   let unlockAt = DEFAULT_UNLOCK_AT;
   try {
     const config = await getUploadConfig();
-    const response = await fetch(`${config.supabaseUrl}/rest/v1/site_settings?select=upload_unlock_at&id=eq.wedding&limit=1`, {
-      headers: { apikey: config.anonKey },
-      cache: "no-store",
-    });
+    const response = await fetch(`/api/site-settings?select=upload_unlock_at&_=${Date.now()}`, { cache: "no-store" });
     const rows = await response.json();
     if (response.ok && rows[0]?.upload_unlock_at) unlockAt = rows[0].upload_unlock_at;
   } catch (error) {
@@ -473,16 +470,10 @@ async function initializeSchedule() {
   try {
     const config = await getUploadConfig();
     const fields = "upload_unlock_at,ceremony_time,ceremony_location,celebration_time,celebration_location";
-    const response = await fetch(`${config.supabaseUrl}/rest/v1/site_settings?select=${fields}&id=eq.wedding&limit=1`, {
-      headers: { apikey: config.anonKey },
-      cache: "no-store",
-    });
+    const response = await fetch(`/api/site-settings?select=${encodeURIComponent(fields)}&_=${Date.now()}`, { cache: "no-store" });
     let rows = await response.json();
     if (!response.ok || !rows[0]) {
-      const fallback = await fetch(`${config.supabaseUrl}/rest/v1/site_settings?select=upload_unlock_at&id=eq.wedding&limit=1`, {
-        headers: { apikey: config.anonKey },
-        cache: "no-store",
-      });
+      const fallback = await fetch(`/api/site-settings?select=upload_unlock_at&_=${Date.now()}`, { cache: "no-store" });
       rows = await fallback.json();
       if (!fallback.ok || !rows[0]) return;
     }
