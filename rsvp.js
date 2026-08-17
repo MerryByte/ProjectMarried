@@ -137,6 +137,7 @@ async function addMyPhoto(file) {
   const card = document.createElement("article");
   card.className = "my-photo";
   const isVideo = file.metadata?.mimetype?.startsWith("video/");
+  if (isVideo) card.classList.add("video-card");
   const media = document.createElement(isVideo ? "video" : "img");
   if (isVideo) {
     media.controls = true;
@@ -164,7 +165,11 @@ async function addMyPhoto(file) {
     if (!isVideo) media.alt = "Media unavailable";
     return;
   }
-  const url = URL.createObjectURL(await response.blob());
+  const responseBlob = await response.blob();
+  const mediaBlob = isVideo && file.metadata?.mimetype
+    ? new Blob([await responseBlob.arrayBuffer()], { type: file.metadata.mimetype })
+    : responseBlob;
+  const url = URL.createObjectURL(mediaBlob);
   photoObjectUrls.push(url);
   if (isVideo) {
     media.addEventListener("loadedmetadata", () => {

@@ -305,6 +305,7 @@ function addPhoto(config, token, photo, familyName) {
   selectText.textContent = "Select";
   selectLabel.append(selectInput, selectText);
   const isVideo = photo.metadata?.mimetype?.startsWith("video/");
+  if (isVideo) card.classList.add("video-card");
   const media = document.createElement(isVideo ? "video" : "img");
   if (isVideo) {
     media.controls = true;
@@ -420,7 +421,11 @@ async function loadPhotoPreview(index) {
     }
     if (!response.ok) throw new Error(`Unable to load a photo (${response.status}).`);
 
-    const objectUrl = URL.createObjectURL(await response.blob());
+    const responseBlob = await response.blob();
+    const mediaBlob = isVideo && entry.photo.metadata?.mimetype
+      ? new Blob([await responseBlob.arrayBuffer()], { type: entry.photo.metadata.mimetype })
+      : responseBlob;
+    const objectUrl = URL.createObjectURL(mediaBlob);
     objectUrls.push(objectUrl);
     entry.thumbnailUrl = objectUrl;
     if (isFullSize) entry.fullUrl = objectUrl;
