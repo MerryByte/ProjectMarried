@@ -153,7 +153,7 @@ async function uploadFiles(files = selectedFiles, onProgress) {
       const label = `Uploading ${index + 1} of ${filesToUpload.length}${uploader.familyName ? ` as ${uploader.familyName}` : ""}`;
       await uploadFile(filesToUpload[index], config, uploader, percent => {
         setStatus(`${label} · ${percent}%`);
-        onProgress?.(percent, index, filesToUpload.length);
+        if (onProgress) onProgress(percent, index, filesToUpload.length);
       });
       uploadedFiles.push(filesToUpload[index]);
     }
@@ -192,7 +192,7 @@ async function openHighQualityCamera(showToast = false) {
     }
     return;
   }
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
     cameraInput.click();
     return;
   }
@@ -216,12 +216,12 @@ async function openHighQualityCamera(showToast = false) {
     cameraPreview.srcObject = cameraStream;
     await cameraPreview.play();
     const videoTrack = cameraStream.getVideoTracks()[0];
-    const settings = videoTrack?.getSettings();
-    cameraResolution.textContent = settings?.width && settings?.height
+    const settings = videoTrack && videoTrack.getSettings ? videoTrack.getSettings() : {};
+    cameraResolution.textContent = settings.width && settings.height
       ? `Recording at ${settings.width} × ${settings.height}`
       : "High-quality camera ready";
-    const capabilities = videoTrack?.getCapabilities?.();
-    if (capabilities?.zoom) {
+    const capabilities = videoTrack && videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
+    if (capabilities && capabilities.zoom) {
       cameraZoom.min = capabilities.zoom.min;
       cameraZoom.max = capabilities.zoom.max;
       cameraZoom.step = capabilities.zoom.step || .1;
@@ -240,7 +240,7 @@ async function openHighQualityCamera(showToast = false) {
 }
 
 async function applyCameraZoom() {
-  const track = cameraStream?.getVideoTracks()[0];
+  const track = cameraStream && cameraStream.getVideoTracks()[0];
   if (!track) return;
   const zoom = Number(cameraZoom.value);
   cameraZoomValue.value = `${zoom.toFixed(1)}×`;
@@ -302,7 +302,7 @@ async function takeHighResolutionPhoto() {
 }
 
 function startHighResolutionVideo() {
-  if (!cameraStream || mediaRecorder?.state === "recording") return;
+  if (!cameraStream || (mediaRecorder && mediaRecorder.state === "recording")) return;
   const mimeTypes = ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
   const mimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || "";
   recordedChunks = [];
@@ -310,8 +310,8 @@ function startHighResolutionVideo() {
   try {
     mediaRecorder = new MediaRecorder(cameraStream, {
       ...(mimeType ? { mimeType } : {}),
-      videoBitsPerSecond: 8_000_000,
-      audioBitsPerSecond: 128_000,
+      videoBitsPerSecond: 8000000,
+      audioBitsPerSecond: 128000,
     });
   } catch {
     mediaRecorder = new MediaRecorder(cameraStream);
@@ -335,14 +335,14 @@ function updateRecordingDuration() {
 }
 
 function stopHighResolutionVideo() {
-  if (mediaRecorder?.state === "recording") mediaRecorder.stop();
+  if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
 }
 
 async function finishHighResolutionVideo() {
   clearTimeout(recordingTimer);
   clearInterval(recordingClock);
   if (discardRecording) return;
-  const type = (mediaRecorder.mimeType || recordedChunks[0]?.type || "video/webm").split(";")[0];
+  const type = (mediaRecorder.mimeType || (recordedChunks[0] && recordedChunks[0].type) || "video/webm").split(";")[0];
   const blob = new Blob(recordedChunks, { type });
   const extension = type.includes("mp4") ? "mp4" : "webm";
   const file = new File([blob], `wedding-${Date.now()}.${extension}`, { type });
@@ -382,7 +382,7 @@ function showCaptureFeedback(message, flash = false, percent = 0, autoHide = fal
 async function saveLastCapture() {
   if (!lastCapturedFile) return;
   try {
-    if (navigator.canShare?.({ files: [lastCapturedFile] })) {
+    if (navigator.canShare && navigator.canShare({ files: [lastCapturedFile] })) {
       await navigator.share({ files: [lastCapturedFile], title: "Wedding memory" });
       return;
     }
@@ -408,7 +408,7 @@ async function uploadCapturedFile(file, typeLabel) {
 }
 
 function closeHighQualityCamera() {
-  if (mediaRecorder?.state === "recording") {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
     discardRecording = true;
     mediaRecorder.stop();
   }
@@ -427,7 +427,7 @@ function closeHighQualityCamera() {
 }
 
 function stopCameraStream() {
-  cameraStream?.getTracks().forEach(track => track.stop());
+  if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
   cameraStream = undefined;
   cameraPreview.srcObject = null;
 }
@@ -450,7 +450,7 @@ async function initializeUploadGate() {
     const config = await getUploadConfig();
     const response = await fetch(`/api/site-settings?select=upload_unlock_at&_=${Date.now()}`, { cache: "no-store" });
     const rows = await response.json();
-    if (response.ok && rows[0]?.upload_unlock_at) unlockAt = rows[0].upload_unlock_at;
+    if (response.ok && rows[0] && rows[0].upload_unlock_at) unlockAt = rows[0].upload_unlock_at;
   } catch (error) {
     console.warn("Using the default upload date.", error);
   }
@@ -508,7 +508,7 @@ function formatScheduleTime(value) {
 }
 
 async function getUploadConfig() {
-  if (window.WEDDING_CONFIG?.supabaseUrl && window.WEDDING_CONFIG?.anonKey) {
+  if (window.WEDDING_CONFIG && window.WEDDING_CONFIG.supabaseUrl && window.WEDDING_CONFIG.anonKey) {
     return window.WEDDING_CONFIG;
   }
 
@@ -566,7 +566,7 @@ async function getUploaderIdentity(config) {
   const rsvpResponse = await fetch(`${config.supabaseUrl}/rest/v1/rsvps?select=family_name&user_id=eq.${encodeURIComponent(user.id)}&limit=1`, { headers: authHeaders });
   const reservations = await rsvpResponse.json();
   if (!rsvpResponse.ok) throw new Error(reservations.message || "Unable to load your reservation name.");
-  if (!reservations[0]?.family_name) return anonymousUploader(config);
+  if (!reservations[0] || !reservations[0].family_name) return anonymousUploader(config);
 
   return { userId: user.id, familyName: reservations[0].family_name, accessToken: session.access_token };
 }
@@ -617,13 +617,13 @@ function uploadRequest(url, headers, file, onProgress) {
 }
 
 function createObjectId() {
-  const webCrypto = globalThis.crypto;
+  const webCrypto = window.crypto;
 
-  if (typeof webCrypto?.randomUUID === "function") {
+  if (webCrypto && typeof webCrypto.randomUUID === "function") {
     return webCrypto.randomUUID();
   }
 
-  if (typeof webCrypto?.getRandomValues === "function") {
+  if (webCrypto && typeof webCrypto.getRandomValues === "function") {
     const bytes = webCrypto.getRandomValues(new Uint8Array(16));
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
