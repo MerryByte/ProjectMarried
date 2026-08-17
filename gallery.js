@@ -308,7 +308,7 @@ function addPhoto(config, token, photo, familyName) {
   const media = document.createElement(isVideo ? "video" : "img");
   if (isVideo) {
     media.controls = true;
-    media.preload = "metadata";
+    media.preload = "auto";
     media.playsInline = true;
   } else {
     media.alt = "Guest wedding memory";
@@ -424,7 +424,24 @@ async function loadPhotoPreview(index) {
     objectUrls.push(objectUrl);
     entry.thumbnailUrl = objectUrl;
     if (isFullSize) entry.fullUrl = objectUrl;
-    entry.media.addEventListener(isVideo ? "loadeddata" : "load", () => entry.media.classList.add("loaded"), { once: true });
+    if (isVideo) {
+      const showVideoPreview = () => entry.media.classList.add("loaded");
+      entry.media.addEventListener("loadeddata", showVideoPreview, { once: true });
+      entry.media.addEventListener("seeked", showVideoPreview, { once: true });
+      entry.media.addEventListener("loadedmetadata", () => {
+        try {
+          if (Number.isFinite(entry.media.duration) && entry.media.duration > .2) {
+            entry.media.currentTime = Math.min(1, entry.media.duration / 10);
+          } else {
+            showVideoPreview();
+          }
+        } catch {
+          showVideoPreview();
+        }
+      }, { once: true });
+    } else {
+      entry.media.addEventListener("load", () => entry.media.classList.add("loaded"), { once: true });
+    }
     entry.media.src = objectUrl;
     return objectUrl;
   })().catch(error => {
