@@ -73,6 +73,7 @@ document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
 initializeUploadGate();
 initializeSchedule();
+window.weddingCameraAppReady = true;
 
 uploadInput.addEventListener("change", addFiles);
 cameraInput.addEventListener("change", event => addFiles(event, true));
