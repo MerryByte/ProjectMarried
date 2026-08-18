@@ -56,6 +56,7 @@ let cameraExposureMinimum = -2;
 let cameraExposureMaximum = 2;
 let cameraFacingMode = "environment";
 let cameraMode = "photo";
+let cameraVideoBitrate = 5000000;
 let lastCapturedFile;
 let captureFeedbackTimer;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
@@ -223,19 +224,23 @@ async function openHighQualityCamera(showToast = false) {
   }
   cameraResolution.textContent = "Starting high-quality camera…";
   try {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const limitedAndroid = isAndroid && ((navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 4));
     cameraStream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: cameraFacingMode },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        frameRate: { ideal: 30 },
+        width: { ideal: limitedAndroid ? 1280 : 1920 },
+        height: { ideal: limitedAndroid ? 720 : 1080 },
+        frameRate: { ideal: 30, max: 30 },
       },
       audio: true,
     });
     cameraPreview.srcObject = cameraStream;
     await cameraPreview.play();
     const videoTrack = cameraStream.getVideoTracks()[0];
+    if (videoTrack && "contentHint" in videoTrack) videoTrack.contentHint = "motion";
     const settings = videoTrack && videoTrack.getSettings ? videoTrack.getSettings() : {};
+    cameraVideoBitrate = limitedAndroid ? 2500000 : isAndroid ? 4000000 : 5000000;
     cameraResolution.textContent = settings.width && settings.height
       ? `Recording at ${settings.width} × ${settings.height}`
       : "High-quality camera ready";
@@ -435,14 +440,14 @@ async function takeHighResolutionPhoto() {
 
 function startHighResolutionVideo() {
   if (!cameraStream || (mediaRecorder && mediaRecorder.state === "recording")) return;
-  const mimeTypes = ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
+  const mimeTypes = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4", "video/webm;codecs=vp8,opus", "video/webm"];
   const mimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || "";
   recordedChunks = [];
   discardRecording = false;
   try {
     mediaRecorder = new MediaRecorder(cameraStream, {
       ...(mimeType ? { mimeType } : {}),
-      videoBitsPerSecond: 8000000,
+      videoBitsPerSecond: cameraVideoBitrate,
       audioBitsPerSecond: 128000,
     });
   } catch {
@@ -450,7 +455,7 @@ function startHighResolutionVideo() {
   }
   mediaRecorder.addEventListener("dataavailable", event => { if (event.data.size) recordedChunks.push(event.data); });
   mediaRecorder.addEventListener("stop", finishHighResolutionVideo, { once: true });
-  mediaRecorder.start(1000);
+  mediaRecorder.start();
   recordVideoButton.hidden = true;
   cameraSwitchButton.hidden = true;
   takePhotoButton.classList.add("recording");
