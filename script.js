@@ -25,8 +25,11 @@ const cameraZoomControl = document.querySelector("#cameraZoomControl");
 const cameraZoom = document.querySelector("#cameraZoom");
 const cameraZoomValue = document.querySelector("#cameraZoomValue");
 const cameraExposureControl = document.querySelector("#cameraExposureControl");
-const cameraExposure = document.querySelector("#cameraExposure");
+const cameraExposureButton = document.querySelector("#cameraExposureButton");
 const cameraExposureValue = document.querySelector("#cameraExposureValue");
+const cameraSwitchButton = document.querySelector("#cameraSwitchButton");
+const cameraZoomButtons = document.querySelectorAll("[data-zoom]");
+const cameraExposureButtons = document.querySelectorAll("[data-exposure]");
 const recordingDuration = document.querySelector("#recordingDuration");
 const captureFeedback = document.querySelector("#captureFeedback");
 const captureFeedbackText = document.querySelector("#captureFeedbackText");
@@ -51,6 +54,9 @@ let hardwareCameraZoom = false;
 let digitalCameraZoom = 1;
 let hardwareCameraExposure = false;
 let digitalCameraExposure = 0;
+let cameraExposureMinimum = -2;
+let cameraExposureMaximum = 2;
+let cameraFacingMode = "environment";
 let lastCapturedFile;
 let captureFeedbackTimer;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
@@ -70,7 +76,10 @@ takePhotoButton.addEventListener("click", takeHighResolutionPhoto);
 recordVideoButton.addEventListener("click", startHighResolutionVideo);
 stopVideoButton.addEventListener("click", stopHighResolutionVideo);
 cameraZoom.addEventListener("input", applyCameraZoom);
-cameraExposure.addEventListener("input", applyCameraExposure);
+cameraExposureButton.addEventListener("click", () => { cameraExposureControl.hidden = !cameraExposureControl.hidden; });
+cameraExposureButtons.forEach(button => button.addEventListener("click", () => setCameraExposure(Number(button.dataset.exposure))));
+cameraZoomButtons.forEach(button => button.addEventListener("click", () => setCameraZoom(Number(button.dataset.zoom))));
+cameraSwitchButton.addEventListener("click", switchCamera);
 cameraPreview.addEventListener("touchstart", startCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchmove", moveCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchend", endCameraPinch);
@@ -217,7 +226,7 @@ async function openHighQualityCamera(showToast = false) {
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: { ideal: "environment" },
+        facingMode: { ideal: cameraFacingMode },
         width: { ideal: 1920 },
         height: { ideal: 1080 },
         frameRate: { ideal: 30 },
@@ -251,20 +260,27 @@ async function openHighQualityCamera(showToast = false) {
       cameraZoomControl.hidden = false;
       cameraResolution.textContent += " · Digital pinch to zoom";
     }
+    cameraZoomButtons.forEach(button => {
+      const value = Number(button.dataset.zoom);
+      button.disabled = value < Number(cameraZoom.min) || value > Number(cameraZoom.max);
+    });
+    updateZoomButtons();
     hardwareCameraExposure = !!(capabilities && capabilities.exposureCompensation);
     if (hardwareCameraExposure) {
-      cameraExposure.min = capabilities.exposureCompensation.min;
-      cameraExposure.max = capabilities.exposureCompensation.max;
-      cameraExposure.step = capabilities.exposureCompensation.step || .1;
-      cameraExposure.value = settings.exposureCompensation || 0;
+      cameraExposureMinimum = capabilities.exposureCompensation.min;
+      cameraExposureMaximum = capabilities.exposureCompensation.max;
     } else {
-      cameraExposure.min = -2;
-      cameraExposure.max = 2;
-      cameraExposure.step = .1;
-      cameraExposure.value = 0;
+      cameraExposureMinimum = -2;
+      cameraExposureMaximum = 2;
     }
-    cameraExposureValue.value = Number(cameraExposure.value).toFixed(1);
-    cameraExposureControl.hidden = false;
+    cameraExposureButtons.forEach(button => {
+      const value = Number(button.dataset.exposure);
+      button.disabled = value < cameraExposureMinimum || value > cameraExposureMaximum;
+    });
+    digitalCameraExposure = 0;
+    updateExposureButtons(0);
+    cameraExposureButton.hidden = false;
+    cameraExposureControl.hidden = true;
   } catch (error) {
     closeHighQualityCamera();
     setStatus("High-quality camera could not open. Opening your phone camera instead.", "error");
@@ -277,6 +293,7 @@ async function applyCameraZoom() {
   if (!track) return;
   const zoom = Number(cameraZoom.value);
   cameraZoomValue.value = `${zoom.toFixed(1)}×`;
+  updateZoomButtons();
   if (!hardwareCameraZoom) {
     digitalCameraZoom = zoom;
     cameraPreview.style.transform = `scale(${zoom})`;
@@ -289,11 +306,31 @@ async function applyCameraZoom() {
   }
 }
 
-async function applyCameraExposure() {
+function setCameraZoom(value) {
+  cameraZoom.value = Math.min(Number(cameraZoom.max), Math.max(Number(cameraZoom.min), value));
+  applyCameraZoom();
+}
+
+function updateZoomButtons() {
+  const active = Number(cameraZoom.value);
+  cameraZoomButtons.forEach(button => button.classList.toggle("active", Math.abs(Number(button.dataset.zoom) - active) < .06));
+}
+
+function setCameraExposure(value) {
+  const exposure = Math.min(cameraExposureMaximum, Math.max(cameraExposureMinimum, value));
+  cameraExposureControl.hidden = true;
+  updateExposureButtons(exposure);
+  applyCameraExposure(exposure);
+}
+
+function updateExposureButtons(exposure) {
+  cameraExposureValue.textContent = exposure > 0 ? `+${exposure.toFixed(1)}` : exposure.toFixed(1);
+  cameraExposureButtons.forEach(button => button.classList.toggle("active", Number(button.dataset.exposure) === exposure));
+}
+
+async function applyCameraExposure(exposure) {
   const track = cameraStream && cameraStream.getVideoTracks()[0];
   if (!track) return;
-  const exposure = Number(cameraExposure.value);
-  cameraExposureValue.value = exposure > 0 ? `+${exposure.toFixed(1)}` : exposure.toFixed(1);
   if (!hardwareCameraExposure) {
     digitalCameraExposure = exposure;
     cameraPreview.style.filter = `brightness(${Math.pow(2, exposure / 2)})`;
@@ -304,6 +341,12 @@ async function applyCameraExposure() {
   } catch (error) {
     console.warn("Camera exposure control is unavailable.", error);
   }
+}
+
+function switchCamera() {
+  cameraFacingMode = cameraFacingMode === "environment" ? "user" : "environment";
+  closeHighQualityCamera();
+  openHighQualityCamera(false);
 }
 
 function startCameraPinch(event) {
@@ -388,6 +431,7 @@ function startHighResolutionVideo() {
   mediaRecorder.start(1000);
   recordVideoButton.hidden = true;
   takePhotoButton.hidden = true;
+  cameraSwitchButton.hidden = true;
   stopVideoButton.hidden = false;
   recordingStartedAt = Date.now();
   recordingDuration.hidden = false;
@@ -415,6 +459,7 @@ async function finishHighResolutionVideo() {
   const file = new File([blob], `wedding-${Date.now()}.${extension}`, { type });
   recordVideoButton.hidden = false;
   takePhotoButton.hidden = false;
+  cameraSwitchButton.hidden = false;
   stopVideoButton.hidden = true;
   recordingDuration.hidden = true;
   setLastCapturedFile(file);
@@ -484,6 +529,7 @@ function closeHighQualityCamera() {
   stopCameraStream();
   recordVideoButton.hidden = false;
   takePhotoButton.hidden = false;
+  cameraSwitchButton.hidden = false;
   stopVideoButton.hidden = true;
   takePhotoButton.disabled = false;
   recordingDuration.hidden = true;
