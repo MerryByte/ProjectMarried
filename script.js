@@ -231,7 +231,7 @@ async function openHighQualityCamera(showToast = false) {
         facingMode: { ideal: cameraFacingMode },
         width: { ideal: limitedAndroid ? 1280 : 1920 },
         height: { ideal: limitedAndroid ? 720 : 1080 },
-        frameRate: { ideal: 30, max: 30 },
+        frameRate: { ideal: 60, max: 60 },
       },
       audio: true,
     });
@@ -240,9 +240,9 @@ async function openHighQualityCamera(showToast = false) {
     const videoTrack = cameraStream.getVideoTracks()[0];
     if (videoTrack && "contentHint" in videoTrack) videoTrack.contentHint = "motion";
     const settings = videoTrack && videoTrack.getSettings ? videoTrack.getSettings() : {};
-    cameraVideoBitrate = limitedAndroid ? 2500000 : isAndroid ? 4000000 : 5000000;
+    cameraVideoBitrate = limitedAndroid ? 5000000 : 8000000;
     cameraResolution.textContent = settings.width && settings.height
-      ? `Recording at ${settings.width} × ${settings.height}`
+      ? `Recording at ${settings.width} × ${settings.height}${settings.frameRate ? ` · ${Math.round(settings.frameRate)} FPS` : ""}`
       : "High-quality camera ready";
     const capabilities = videoTrack && videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
     hardwareCameraZoom = !!(capabilities && capabilities.zoom);
