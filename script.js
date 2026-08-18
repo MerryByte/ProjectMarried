@@ -27,6 +27,9 @@ const cameraExposureControl = document.querySelector("#cameraExposureControl");
 const cameraExposureButton = document.querySelector("#cameraExposureButton");
 const cameraExposureValue = document.querySelector("#cameraExposureValue");
 const cameraSwitchButton = document.querySelector("#cameraSwitchButton");
+const cameraQualityButton = document.querySelector("#cameraQualityButton");
+const cameraQualityControl = document.querySelector("#cameraQualityControl");
+const cameraQualityButtons = document.querySelectorAll("[data-quality]");
 const cameraZoomButtons = document.querySelectorAll("[data-zoom]");
 const cameraExposureButtons = document.querySelectorAll("[data-exposure]");
 const recordingDuration = document.querySelector("#recordingDuration");
@@ -57,6 +60,7 @@ let cameraExposureMaximum = 2;
 let cameraFacingMode = "environment";
 let cameraMode = "photo";
 let cameraVideoBitrate = 5000000;
+let cameraQuality = "1080";
 let lastCapturedFile;
 let captureFeedbackTimer;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
@@ -75,7 +79,9 @@ cameraRecorderClose.addEventListener("click", closeHighQualityCamera);
 takePhotoButton.addEventListener("click", captureInSelectedMode);
 recordVideoButton.addEventListener("click", toggleCameraMode);
 cameraZoom.addEventListener("input", applyCameraZoom);
-cameraExposureButton.addEventListener("click", () => { cameraExposureControl.hidden = !cameraExposureControl.hidden; });
+cameraExposureButton.addEventListener("click", () => { cameraQualityControl.hidden = true; cameraExposureControl.hidden = !cameraExposureControl.hidden; });
+cameraQualityButton.addEventListener("click", () => { cameraExposureControl.hidden = true; cameraQualityControl.hidden = !cameraQualityControl.hidden; });
+cameraQualityButtons.forEach(button => button.addEventListener("click", () => setCameraQuality(button.dataset.quality)));
 cameraExposureButtons.forEach(button => button.addEventListener("click", () => setCameraExposure(Number(button.dataset.exposure))));
 cameraZoomButtons.forEach(button => button.addEventListener("click", () => setCameraZoom(Number(button.dataset.zoom))));
 cameraSwitchButton.addEventListener("click", switchCamera);
@@ -226,11 +232,13 @@ async function openHighQualityCamera(showToast = false) {
   try {
     const isAndroid = /Android/i.test(navigator.userAgent);
     const limitedAndroid = isAndroid && ((navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 4));
+    const requestedWidth = cameraQuality === "2160" ? 3840 : 1920;
+    const requestedHeight = cameraQuality === "2160" ? 2160 : 1080;
     cameraStream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: cameraFacingMode },
-        width: { ideal: limitedAndroid ? 1280 : 1920 },
-        height: { ideal: limitedAndroid ? 720 : 1080 },
+        width: { ideal: requestedWidth },
+        height: { ideal: requestedHeight },
         frameRate: { ideal: 60, max: 60 },
       },
       audio: true,
@@ -240,11 +248,18 @@ async function openHighQualityCamera(showToast = false) {
     const videoTrack = cameraStream.getVideoTracks()[0];
     if (videoTrack && "contentHint" in videoTrack) videoTrack.contentHint = "motion";
     const settings = videoTrack && videoTrack.getSettings ? videoTrack.getSettings() : {};
-    cameraVideoBitrate = limitedAndroid ? 5000000 : 8000000;
+    cameraVideoBitrate = cameraQuality === "2160" ? 8000000 : limitedAndroid ? 5000000 : 8000000;
     cameraResolution.textContent = settings.width && settings.height
       ? `Recording at ${settings.width} × ${settings.height}${settings.frameRate ? ` · ${Math.round(settings.frameRate)} FPS` : ""}`
       : "High-quality camera ready";
     const capabilities = videoTrack && videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
+    const supports4K = !capabilities || !capabilities.width || capabilities.width.max >= 3840;
+    cameraQualityButtons.forEach(button => {
+      button.disabled = button.dataset.quality === "2160" && !supports4K;
+      button.classList.toggle("active", button.dataset.quality === cameraQuality);
+    });
+    cameraQualityButton.textContent = cameraQuality === "2160" ? "4K" : "1080p";
+    cameraQualityControl.hidden = true;
     hardwareCameraZoom = !!(capabilities && capabilities.zoom);
     if (hardwareCameraZoom) {
       cameraZoom.min = capabilities.zoom.min;
@@ -349,6 +364,18 @@ async function applyCameraExposure(exposure) {
 
 function switchCamera() {
   cameraFacingMode = cameraFacingMode === "environment" ? "user" : "environment";
+  closeHighQualityCamera();
+  openHighQualityCamera(false);
+}
+
+function setCameraQuality(quality) {
+  const button = document.querySelector(`[data-quality="${quality}"]`);
+  if (!button || button.disabled || cameraQuality === quality) {
+    cameraQualityControl.hidden = true;
+    return;
+  }
+  cameraQuality = quality;
+  cameraQualityButton.textContent = quality === "2160" ? "4K" : "1080p";
   closeHighQualityCamera();
   openHighQualityCamera(false);
 }
@@ -545,6 +572,7 @@ function closeHighQualityCamera() {
   clearTimeout(captureFeedbackTimer);
   cameraZoomControl.hidden = true;
   cameraExposureControl.hidden = true;
+  cameraQualityControl.hidden = true;
   hardwareCameraZoom = false;
   digitalCameraZoom = 1;
   hardwareCameraExposure = false;
