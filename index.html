@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="public/couple-hero.webp" as="image" type="image/webp" imagesrcset="public/couple-hero-mobile.webp 900w, public/couple-hero.webp 1536w" imagesizes="100vw" fetchpriority="high">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
   <main>
@@ -99,6 +99,7 @@
         <p id="cameraResolution">Starting high-quality camera…</p>
         <p class="recording-duration" id="recordingDuration" hidden>Recording · 00:00 / 00:45</p>
         <label class="camera-zoom" id="cameraZoomControl" hidden>Zoom <input id="cameraZoom" type="range" min="1" max="1" step="0.1" value="1"><output id="cameraZoomValue">1×</output></label>
+        <label class="camera-exposure" id="cameraExposureControl" hidden>Exposure <input id="cameraExposure" type="range" min="-2" max="2" step="0.1" value="0"><output id="cameraExposureValue">0.0</output></label>
         <div class="camera-recorder-actions">
           <button id="takePhotoButton" type="button">Take photo</button>
           <button id="recordVideoButton" type="button">Record video</button>
@@ -125,6 +126,6 @@
   <script src="date.js?v=2"></script>
   <script src="nav.js?v=2"></script>
   <script src="compatibility.js?v=1"></script>
-  <script src="script.js?v=34"></script>
+  <script src="script.js?v=35"></script>
 </body>
 </html>

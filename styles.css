@@ -118,10 +118,10 @@ h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 .camera-recorder-actions button:hover { background:rgba(255,255,255,.22); }
 .camera-recorder-actions .recording { border-color:#d95b53; background:#b63e36; }
 .camera-recorder-actions button[hidden] { display:none; }
-.camera-zoom { width:min(520px,calc(100% - 40px)); margin:12px auto 0; display:grid; grid-template-columns:auto 1fr 34px; align-items:center; gap:12px; color:#e7ebe8; font-size:12px; font-weight:600; }
-.camera-zoom[hidden] { display:none; }
-.camera-zoom input { width:100%; accent-color:white; }
-.camera-zoom output { text-align:right; font-variant-numeric:tabular-nums; }
+.camera-zoom,.camera-exposure { width:min(520px,calc(100% - 40px)); margin:12px auto 0; display:grid; grid-template-columns:62px 1fr 42px; align-items:center; gap:12px; color:#e7ebe8; font-size:12px; font-weight:600; }
+.camera-zoom[hidden],.camera-exposure[hidden] { display:none; }
+.camera-zoom input,.camera-exposure input { width:100%; accent-color:white; }
+.camera-zoom output,.camera-exposure output { text-align:right; font-variant-numeric:tabular-nums; }
 
 @media (max-width: 680px) {
   .camera-recorder-actions { padding-bottom:calc(20px + env(safe-area-inset-bottom,0px)); }

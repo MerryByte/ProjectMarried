@@ -24,6 +24,9 @@ const stopVideoButton = document.querySelector("#stopVideoButton");
 const cameraZoomControl = document.querySelector("#cameraZoomControl");
 const cameraZoom = document.querySelector("#cameraZoom");
 const cameraZoomValue = document.querySelector("#cameraZoomValue");
+const cameraExposureControl = document.querySelector("#cameraExposureControl");
+const cameraExposure = document.querySelector("#cameraExposure");
+const cameraExposureValue = document.querySelector("#cameraExposureValue");
 const recordingDuration = document.querySelector("#recordingDuration");
 const captureFeedback = document.querySelector("#captureFeedback");
 const captureFeedbackText = document.querySelector("#captureFeedbackText");
@@ -46,6 +49,8 @@ let pinchStartDistance;
 let pinchStartZoom;
 let hardwareCameraZoom = false;
 let digitalCameraZoom = 1;
+let hardwareCameraExposure = false;
+let digitalCameraExposure = 0;
 let lastCapturedFile;
 let captureFeedbackTimer;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
@@ -65,6 +70,7 @@ takePhotoButton.addEventListener("click", takeHighResolutionPhoto);
 recordVideoButton.addEventListener("click", startHighResolutionVideo);
 stopVideoButton.addEventListener("click", stopHighResolutionVideo);
 cameraZoom.addEventListener("input", applyCameraZoom);
+cameraExposure.addEventListener("input", applyCameraExposure);
 cameraPreview.addEventListener("touchstart", startCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchmove", moveCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchend", endCameraPinch);
@@ -245,6 +251,20 @@ async function openHighQualityCamera(showToast = false) {
       cameraZoomControl.hidden = false;
       cameraResolution.textContent += " · Digital pinch to zoom";
     }
+    hardwareCameraExposure = !!(capabilities && capabilities.exposureCompensation);
+    if (hardwareCameraExposure) {
+      cameraExposure.min = capabilities.exposureCompensation.min;
+      cameraExposure.max = capabilities.exposureCompensation.max;
+      cameraExposure.step = capabilities.exposureCompensation.step || .1;
+      cameraExposure.value = settings.exposureCompensation || 0;
+    } else {
+      cameraExposure.min = -2;
+      cameraExposure.max = 2;
+      cameraExposure.step = .1;
+      cameraExposure.value = 0;
+    }
+    cameraExposureValue.value = Number(cameraExposure.value).toFixed(1);
+    cameraExposureControl.hidden = false;
   } catch (error) {
     closeHighQualityCamera();
     setStatus("High-quality camera could not open. Opening your phone camera instead.", "error");
@@ -266,6 +286,23 @@ async function applyCameraZoom() {
     await track.applyConstraints({ advanced: [{ zoom }] });
   } catch (error) {
     console.warn("Camera zoom is unavailable.", error);
+  }
+}
+
+async function applyCameraExposure() {
+  const track = cameraStream && cameraStream.getVideoTracks()[0];
+  if (!track) return;
+  const exposure = Number(cameraExposure.value);
+  cameraExposureValue.value = exposure > 0 ? `+${exposure.toFixed(1)}` : exposure.toFixed(1);
+  if (!hardwareCameraExposure) {
+    digitalCameraExposure = exposure;
+    cameraPreview.style.filter = `brightness(${Math.pow(2, exposure / 2)})`;
+    return;
+  }
+  try {
+    await track.applyConstraints({ advanced: [{ exposureCompensation: exposure }] });
+  } catch (error) {
+    console.warn("Camera exposure control is unavailable.", error);
   }
 }
 
@@ -302,14 +339,18 @@ async function takeHighResolutionPhoto() {
   const canvas = document.createElement("canvas");
   canvas.width = cameraPreview.videoWidth;
   canvas.height = cameraPreview.videoHeight;
+  const captureContext = canvas.getContext("2d");
+  if (!hardwareCameraExposure && digitalCameraExposure && "filter" in captureContext) {
+    captureContext.filter = `brightness(${Math.pow(2, digitalCameraExposure / 2)})`;
+  }
   if (!hardwareCameraZoom && digitalCameraZoom > 1) {
     const sourceWidth = cameraPreview.videoWidth / digitalCameraZoom;
     const sourceHeight = cameraPreview.videoHeight / digitalCameraZoom;
     const sourceX = (cameraPreview.videoWidth - sourceWidth) / 2;
     const sourceY = (cameraPreview.videoHeight - sourceHeight) / 2;
-    canvas.getContext("2d").drawImage(cameraPreview, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+    captureContext.drawImage(cameraPreview, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
   } else {
-    canvas.getContext("2d").drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+    captureContext.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
   }
   const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .95));
   if (!blob) {
@@ -449,9 +490,13 @@ function closeHighQualityCamera() {
   captureFeedback.hidden = true;
   clearTimeout(captureFeedbackTimer);
   cameraZoomControl.hidden = true;
+  cameraExposureControl.hidden = true;
   hardwareCameraZoom = false;
   digitalCameraZoom = 1;
+  hardwareCameraExposure = false;
+  digitalCameraExposure = 0;
   cameraPreview.style.transform = "";
+  cameraPreview.style.filter = "";
   cameraRecorder.classList.remove("active");
   cameraRecorder.removeAttribute("open");
   document.documentElement.classList.remove("camera-open");
