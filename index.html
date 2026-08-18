@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="public/couple-hero.webp" as="image" type="image/webp" imagesrcset="public/couple-hero-mobile.webp 900w, public/couple-hero.webp 1536w" imagesizes="100vw" fetchpriority="high">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
   <main>
@@ -92,7 +92,7 @@
         <button id="cameraToastClose" type="button" aria-label="Dismiss message">&times;</button>
       </div>
 
-      <dialog class="camera-recorder" id="cameraRecorder" aria-label="High-quality camera">
+      <div class="camera-recorder" id="cameraRecorder" role="dialog" aria-modal="true" aria-label="High-quality camera">
         <div class="camera-topbar"><button class="camera-recorder-close" id="cameraRecorderClose" type="button" aria-label="Close camera">&times;</button><button class="camera-exposure-button" id="cameraExposureButton" type="button" aria-label="Change exposure">EV <span id="cameraExposureValue">0.0</span></button></div>
         <div class="camera-exposure" id="cameraExposureControl" hidden><button type="button" data-exposure="-2">−2</button><button type="button" data-exposure="-1">−1</button><button type="button" data-exposure="0">0</button><button type="button" data-exposure="1">+1</button><button type="button" data-exposure="2">+2</button></div>
         <div class="camera-stage">
@@ -101,8 +101,8 @@
           <p id="cameraResolution">Starting high-quality camera…</p><p class="recording-duration" id="recordingDuration" hidden>Recording · 00:00 / 00:45</p>
           <div class="camera-zoom" id="cameraZoomControl" hidden><input id="cameraZoom" type="range" min="1" max="1" step="0.1" value="1" hidden><button type="button" data-zoom="0.5">.5</button><button type="button" data-zoom="1">1×</button><button type="button" data-zoom="2">2</button><button type="button" data-zoom="3">3</button><output id="cameraZoomValue">1×</output></div>
         </div>
-        <div class="camera-recorder-actions"><button id="recordVideoButton" type="button">Video</button><button class="camera-shutter" id="takePhotoButton" type="button" aria-label="Take photo"><span></span></button><button class="camera-switch" id="cameraSwitchButton" type="button" aria-label="Switch camera">↻</button><button id="stopVideoButton" class="recording" type="button" hidden>Stop recording</button><button id="saveCaptureButton" type="button" hidden>Save to phone</button></div>
-      </dialog>
+        <div class="camera-recorder-actions"><button id="recordVideoButton" type="button">Video</button><button class="camera-shutter" id="takePhotoButton" type="button" aria-label="Take photo"><span></span></button><button class="camera-switch" id="cameraSwitchButton" type="button" aria-label="Switch camera">↻</button></div>
+      </div>
 
       <div class="selection" id="selection" hidden>
         <span>✓</span>
@@ -122,6 +122,6 @@
   <script src="date.js?v=2"></script>
   <script src="nav.js?v=2"></script>
   <script src="compatibility.js?v=1"></script>
-  <script src="script.js?v=36"></script>
+  <script src="script.js?v=37"></script>
 </body>
 </html>

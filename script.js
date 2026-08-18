@@ -20,7 +20,6 @@ const cameraResolution = document.querySelector("#cameraResolution");
 const cameraRecorderClose = document.querySelector("#cameraRecorderClose");
 const takePhotoButton = document.querySelector("#takePhotoButton");
 const recordVideoButton = document.querySelector("#recordVideoButton");
-const stopVideoButton = document.querySelector("#stopVideoButton");
 const cameraZoomControl = document.querySelector("#cameraZoomControl");
 const cameraZoom = document.querySelector("#cameraZoom");
 const cameraZoomValue = document.querySelector("#cameraZoomValue");
@@ -36,7 +35,6 @@ const captureFeedbackText = document.querySelector("#captureFeedbackText");
 const captureFeedbackIcon = document.querySelector("#captureFeedbackIcon");
 const captureProgress = document.querySelector("#captureProgress");
 const captureProgressText = document.querySelector("#captureProgressText");
-const saveCaptureButton = document.querySelector("#saveCaptureButton");
 let selectedFiles = [];
 let uploadsUnlocked = false;
 let unlockMessage = "Photo sharing is not open yet.";
@@ -57,6 +55,7 @@ let digitalCameraExposure = 0;
 let cameraExposureMinimum = -2;
 let cameraExposureMaximum = 2;
 let cameraFacingMode = "environment";
+let cameraMode = "photo";
 let lastCapturedFile;
 let captureFeedbackTimer;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
@@ -72,9 +71,8 @@ cameraButton.addEventListener("click", () => openHighQualityCamera(true));
 floatingCameraButton.addEventListener("click", () => openHighQualityCamera(true));
 cameraToastClose.addEventListener("click", () => dismissCameraToast(true));
 cameraRecorderClose.addEventListener("click", closeHighQualityCamera);
-takePhotoButton.addEventListener("click", takeHighResolutionPhoto);
-recordVideoButton.addEventListener("click", startHighResolutionVideo);
-stopVideoButton.addEventListener("click", stopHighResolutionVideo);
+takePhotoButton.addEventListener("click", captureInSelectedMode);
+recordVideoButton.addEventListener("click", toggleCameraMode);
 cameraZoom.addEventListener("input", applyCameraZoom);
 cameraExposureButton.addEventListener("click", () => { cameraExposureControl.hidden = !cameraExposureControl.hidden; });
 cameraExposureButtons.forEach(button => button.addEventListener("click", () => setCameraExposure(Number(button.dataset.exposure))));
@@ -83,9 +81,9 @@ cameraSwitchButton.addEventListener("click", switchCamera);
 cameraPreview.addEventListener("touchstart", startCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchmove", moveCameraPinch, { passive: false });
 cameraPreview.addEventListener("touchend", endCameraPinch);
-saveCaptureButton.addEventListener("click", saveLastCapture);
-cameraRecorder.addEventListener("cancel", event => { event.preventDefault(); closeHighQualityCamera(); });
 window.addEventListener("pagehide", stopCameraStream);
+window.addEventListener("resize", updateCameraViewport);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", updateCameraViewport);
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
 initializeUploadGate();
@@ -218,6 +216,7 @@ async function openHighQualityCamera(showToast = false) {
     cameraRecorder.setAttribute("open", "");
     cameraRecorder.classList.add("active");
     document.documentElement.classList.add("camera-open");
+    updateCameraViewport();
   } catch {
     cameraInput.click();
     return;
@@ -375,6 +374,29 @@ function getTouchDistance(touches) {
   return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
 }
 
+function updateCameraViewport() {
+  const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  if (height) cameraRecorder.style.setProperty("--camera-height", `${Math.round(height)}px`);
+}
+
+function toggleCameraMode() {
+  if (mediaRecorder && mediaRecorder.state === "recording") return;
+  cameraMode = cameraMode === "photo" ? "video" : "photo";
+  cameraRecorder.classList.toggle("video-mode", cameraMode === "video");
+  recordVideoButton.textContent = cameraMode === "video" ? "Photo" : "Video";
+  takePhotoButton.setAttribute("aria-label", cameraMode === "video" ? "Start video recording" : "Take photo");
+}
+
+function captureInSelectedMode() {
+  if (cameraMode === "photo") {
+    takeHighResolutionPhoto();
+  } else if (mediaRecorder && mediaRecorder.state === "recording") {
+    stopHighResolutionVideo();
+  } else {
+    startHighResolutionVideo();
+  }
+}
+
 async function takeHighResolutionPhoto() {
   if (!cameraStream || !cameraPreview.videoWidth) return;
   takePhotoButton.disabled = true;
@@ -430,9 +452,9 @@ function startHighResolutionVideo() {
   mediaRecorder.addEventListener("stop", finishHighResolutionVideo, { once: true });
   mediaRecorder.start(1000);
   recordVideoButton.hidden = true;
-  takePhotoButton.hidden = true;
   cameraSwitchButton.hidden = true;
-  stopVideoButton.hidden = false;
+  takePhotoButton.classList.add("recording");
+  takePhotoButton.setAttribute("aria-label", "Stop video recording");
   recordingStartedAt = Date.now();
   recordingDuration.hidden = false;
   updateRecordingDuration();
@@ -458,9 +480,9 @@ async function finishHighResolutionVideo() {
   const extension = type.includes("mp4") ? "mp4" : "webm";
   const file = new File([blob], `wedding-${Date.now()}.${extension}`, { type });
   recordVideoButton.hidden = false;
-  takePhotoButton.hidden = false;
   cameraSwitchButton.hidden = false;
-  stopVideoButton.hidden = true;
+  takePhotoButton.classList.remove("recording");
+  takePhotoButton.setAttribute("aria-label", "Start video recording");
   recordingDuration.hidden = true;
   setLastCapturedFile(file);
   if (file.size > MAX_VIDEO_SIZE) {
@@ -473,7 +495,6 @@ async function finishHighResolutionVideo() {
 
 function setLastCapturedFile(file) {
   lastCapturedFile = file;
-  saveCaptureButton.hidden = false;
 }
 
 function showCaptureFeedback(message, flash = false, percent = 0, autoHide = false) {
@@ -489,24 +510,6 @@ function showCaptureFeedback(message, flash = false, percent = 0, autoHide = fal
     cameraRecorder.classList.add("flash");
   }
   if (autoHide) captureFeedbackTimer = setTimeout(() => { captureFeedback.hidden = true; }, 2200);
-}
-
-async function saveLastCapture() {
-  if (!lastCapturedFile) return;
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [lastCapturedFile] })) {
-      await navigator.share({ files: [lastCapturedFile], title: "Wedding memory" });
-      return;
-    }
-  } catch (error) {
-    if (error.name === "AbortError") return;
-  }
-  const url = URL.createObjectURL(lastCapturedFile);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = lastCapturedFile.name;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function uploadCapturedFile(file, typeLabel) {
@@ -530,7 +533,7 @@ function closeHighQualityCamera() {
   recordVideoButton.hidden = false;
   takePhotoButton.hidden = false;
   cameraSwitchButton.hidden = false;
-  stopVideoButton.hidden = true;
+  takePhotoButton.classList.remove("recording");
   takePhotoButton.disabled = false;
   recordingDuration.hidden = true;
   captureFeedback.hidden = true;
