@@ -7,7 +7,7 @@
     "Ceremony": "Церемонія", "Celebration": "Святкування", "Time to be announced": "Час повідомимо згодом",
     "Location to be announced": "Місце повідомимо згодом", "From your point of view": "Вашими очима",
     "Help us remember": "Допоможіть нам зберегти", "every little moment.": "кожну мить.",
-    "The happy tears, the dance moves, the moments we missed— share your photos and videos from our day.": "Сльози щастя, танці та миті, яких ми не помітили — поділіться фото й відео з нашого свята.",
+    "Share your photos and videos from our day.": "Поділіться фото й відео з нашого свята.",
     "Checking when photo sharing opens…": "Перевіряємо, коли можна буде ділитися фото…",
     "Photo sharing is not open yet.": "Завантаження фото ще не відкрито.",
     "Camera locked. Photo sharing is not open yet.": "Камера заблокована. Завантаження фото ще не відкрито.",
