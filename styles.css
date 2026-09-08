@@ -60,6 +60,12 @@ h1 em { font-weight: 400; font-size: .66em; }
 
 .share { min-height: 100svh; padding: 120px 24px 80px; text-align: center; display: flex; flex-direction: column; align-items: center; }
 .share .eyebrow { color: var(--sage); }
+.registry { padding:90px 24px; text-align:center; background:#e8e8df; scroll-margin-top:96px; }
+.registry .eyebrow { color:var(--sage); }
+.registry .intro { font-size:16px; margin-bottom:32px; }
+.registry-link { display:inline-block; padding:16px 24px; border:1px solid var(--ink); border-radius:2px; background:var(--ink); color:var(--cream); font-size:14px; line-height:1.5; text-decoration:none; }
+.registry-link:hover { background:var(--sage); }
+.registry-link:focus-visible { outline:2px solid var(--ink); outline-offset:4px; }
 h2 { font-size: clamp(45px, 7vw, 82px); line-height: 1; }
 .intro { max-width: 530px; margin: 30px auto 48px; color: #6d766f; line-height: 1.8; font-size: 15px; }
 .upload-gate { width:min(734px,100%); }.upload-gate.locked .actions { pointer-events:none; user-select:none; }.upload-gate.locked .actions button { cursor:not-allowed; }
