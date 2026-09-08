@@ -9,6 +9,8 @@
     "Help us remember": "Допоможіть нам зберегти", "every little moment.": "кожну мить.",
     "The happy tears, the dance moves, the moments we missed— share your photos and videos from our day.": "Сльози щастя, танці та миті, яких ми не помітили — поділіться фото й відео з нашого свята.",
     "Checking when photo sharing opens…": "Перевіряємо, коли можна буде ділитися фото…",
+    "Photo sharing is not open yet.": "Завантаження фото ще не відкрито.",
+    "Camera locked. Photo sharing is not open yet.": "Камера заблокована. Завантаження фото ще не відкрито.",
     "Choose from library": "Вибрати з галереї", "Photos and videos": "Фото та відео", "Open camera": "Відкрити камеру",
     "Take a photo or video": "Зробити фото або відео", "Camera photos and videos upload automatically after capture.": "Фото та відео з камери завантажуються автоматично після зйомки.",
     "Dismiss message": "Закрити повідомлення", "High-quality camera": "Камера високої якості", "Close camera": "Закрити камеру",
@@ -103,7 +105,7 @@
     if (translations.has(text)) return translations.get(text);
     for (const [pattern, replace] of patterns) if (pattern.test(text)) return text.replace(pattern, replace);
     if (/^(?:RSVP|Login|Create account|Gallery|Anatoliy).*\|/.test(text)) {
-      return text.replace("Create account", "Створити обліковий запис").replace("Login", "Вхід").replace("Gallery", "Галерея").replace("RSVP", "Підтвердження участі").replace("Anatoliy", "Анатолій").replace("Elizabeth", "Єлизавета");
+      return text.replace("Create account", "Створити обліковий запис").replace("Login", "Вхід").replace("Gallery", "Галерея").replace("RSVP", "Підтвердження участі").replace("Anatoliy", "Анатолій").replace("Elizabeth", "Єлизавета").replace("Our Wedding", "Наше весілля");
     }
     if (/^(?:Camera locked\. )?Photo sharing opens /.test(text)) return text.replace("Camera locked. ", "Камера заблокована. ").replace("Photo sharing opens ", "Завантаження фото відкриється ").replace(/([A-Z][a-z]+) (\d+), (\d{4}) at (\d+):(\d+) (AM|PM)/, (_, month, day, year, hour, minute, period) => `${day} ${ukrainianMonths[months.indexOf(month)]} ${year} о ${String(Number(hour) % 12 + (period === "PM" ? 12 : 0)).padStart(2, "0")}:${minute}`);
     const date = /^([A-Z][a-z]+) (\d+), (\d{4})$/.exec(text);

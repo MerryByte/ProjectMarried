@@ -1,5 +1,4 @@
 (function () {
-  var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   function request(url, headers, done) {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", url, true);
@@ -15,15 +14,14 @@
     var url = "/api/site-settings?select=upload_unlock_at&_=" + Date.now();
     request(url, {}, function (rows) {
       if (!rows[0] || !rows[0].upload_unlock_at) return;
-      var match = /^(\d{4})-(\d{2})-(\d{2})/.exec(rows[0].upload_unlock_at);
-      if (!match) return;
-      var month = months[Number(match[2]) - 1];
-      var day = Number(match[3]);
-      var year = match[1];
+      var date = new Date(rows[0].upload_unlock_at);
+      if (!isFinite(date.getTime())) return;
       var shortDate = document.getElementById("weddingDateShort");
       var longDate = document.getElementById("weddingDateLong");
-      if (shortDate) shortDate.textContent = month.slice(0, 3) + " " + day + ", " + year;
-      if (longDate) longDate.textContent = month + " " + day + ", " + year;
+      var options = { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric" };
+      if (shortDate) shortDate.textContent = new Intl.DateTimeFormat("en-US", options).format(date);
+      options.month = "long";
+      if (longDate) longDate.textContent = new Intl.DateTimeFormat("en-US", options).format(date);
     });
   }
   loadDate(window.WEDDING_CONFIG);

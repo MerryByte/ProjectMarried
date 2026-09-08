@@ -69,7 +69,6 @@ const MAX_FILES_PER_BATCH = 20;
 const MAX_UPLOAD_ATTEMPTS = 3;
 const RSVP_SESSION_KEY = "weddingRsvpSession";
 const CAMERA_NOTICE_KEY = "weddingCameraNoticeDismissed";
-const DEFAULT_UNLOCK_AT = "2026-12-14T08:00:00.000Z";
 
 uploadButton.addEventListener("click", () => openPicker(uploadInput));
 cameraButton.addEventListener("click", () => openHighQualityCamera(true));
@@ -619,14 +618,14 @@ function cameraNoticeWasDismissed() {
 }
 
 async function initializeUploadGate() {
-  let unlockAt = DEFAULT_UNLOCK_AT;
+  let unlockAt;
   try {
     const config = await getUploadConfig();
     const response = await fetch(`/api/site-settings?select=upload_unlock_at&_=${Date.now()}`, { cache: "no-store" });
     const rows = await response.json();
     if (response.ok && rows[0] && rows[0].upload_unlock_at) unlockAt = rows[0].upload_unlock_at;
   } catch (error) {
-    console.warn("Using the default upload date.", error);
+    console.warn("Photo sharing date is unavailable.", error);
   }
 
   const unlockDate = parseSiteDate(unlockAt);
@@ -634,7 +633,9 @@ async function initializeUploadGate() {
   uploadGate.classList.toggle("locked", !uploadsUnlocked);
   uploadLock.hidden = uploadsUnlocked;
   if (!uploadsUnlocked) {
-    unlockMessage = `Photo sharing opens ${new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", month:"long", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit" }).format(unlockDate)}.`;
+    unlockMessage = Number.isFinite(unlockDate.getTime())
+      ? `Photo sharing opens ${new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", month:"long", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit" }).format(unlockDate)}.`
+      : "Photo sharing is not open yet.";
     uploadLockMessage.textContent = unlockMessage;
     floatingCameraButton.setAttribute("aria-label", `Camera locked. ${unlockMessage}`);
   }
@@ -650,12 +651,6 @@ async function initializeSchedule() {
       const fallback = await fetch(`/api/site-settings?select=upload_unlock_at&_=${Date.now()}`, { cache: "no-store" });
       rows = await fallback.json();
       if (!fallback.ok || !rows[0]) return;
-    }
-    const weddingDate = parseSiteDate(rows[0].upload_unlock_at);
-    if (Number.isFinite(weddingDate.getTime())) {
-      const options = { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric" };
-      document.querySelector("#weddingDateShort").textContent = new Intl.DateTimeFormat("en-US", options).format(weddingDate);
-      document.querySelector("#weddingDateLong").textContent = new Intl.DateTimeFormat("en-US", { ...options, month: "long" }).format(weddingDate);
     }
     for (const event of ["ceremony", "celebration"]) {
       const time = rows[0][`${event}_time`];
