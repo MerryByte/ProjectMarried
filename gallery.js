@@ -269,7 +269,7 @@ async function loadReservations() {
   reservationRows.replaceChildren(...rows.map(row => {
     const tr=document.createElement("tr");
     const values=[row.family_name,row.contact_email,row.attending?"Attending":"Declined",row.adult_count,row.child_count,row.adult_count+row.child_count,row.notes||"—",new Date(row.created_at).toLocaleDateString()];
-    values.forEach((value,index) => { const td=document.createElement("td"); td.textContent=value; if(index===2)td.className=row.attending?"yes":"no"; if(index===6)td.className="notes"; tr.append(td); });
+    values.forEach((value,index) => { const td=document.createElement("td"); td.textContent=value; if(index===0||index===1||index===6)td.setAttribute("translate","no"); if(index===2)td.className=row.attending?"yes":"no"; if(index===6)td.className="notes"; tr.append(td); });
     return tr;
   }));
   reservationStatus.textContent = rows.length ? "" : "No reservations have been submitted yet.";
@@ -374,7 +374,7 @@ function clearSelectedPhotos() {
 
 async function deleteSelectedPhotoObjects() {
   const paths = [...selectedPhotoPaths];
-  if (!paths.length || !confirm(`Permanently delete ${paths.length} selected ${paths.length === 1 ? "memory" : "memories"}? This cannot be undone.`)) return;
+  if (!paths.length || !confirm(window.weddingTranslate(`Permanently delete ${paths.length} selected ${paths.length === 1 ? "memory" : "memories"}? This cannot be undone.`))) return;
   deleteSelectedPhotos.disabled = true;
   galleryStatus.className = "status";
   galleryStatus.textContent = `Deleting ${paths.length} ${paths.length === 1 ? "memory" : "memories"}…`;
