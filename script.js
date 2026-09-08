@@ -94,7 +94,8 @@ if (window.visualViewport) window.visualViewport.addEventListener("resize", upda
 document.querySelector("#clearButton").addEventListener("click", clearFiles);
 submitButton.addEventListener("click", () => uploadFiles());
 initializeUploadGate();
-initializeSchedule();
+if (document.querySelector("#weddingDateShort")) initializeSchedule();
+document.addEventListener("wedding:close-camera", () => { closeHighQualityCamera(); dismissCameraToast(); });
 window.weddingCameraAppReady = true;
 
 uploadInput.addEventListener("change", addFiles);
@@ -184,6 +185,7 @@ async function uploadFiles(files = selectedFiles, onProgress) {
     selectedFiles = selectedFiles.filter(file => !uploadedFiles.includes(file));
     showFiles();
     setStatus(`${filesToUpload.length} ${filesToUpload.length === 1 ? "memory was" : "memories were"} uploaded. Thank you!`, "success");
+    document.dispatchEvent(new Event("wedding:photos-uploaded"));
   } catch (error) {
     console.error(error);
     selectedFiles = selectedFiles.filter(file => !uploadedFiles.includes(file));
@@ -534,7 +536,21 @@ function showCaptureFeedback(message, flash = false, percent = 0, autoHide = fal
   captureFeedbackText.textContent = message;
   captureProgress.value = percent;
   captureProgressText.textContent = `${percent}%`;
-  captureFeedbackIcon.textContent = percent === 100 ? "✓" : "↑";
+  captureFeedbackIcon.textContent = percent === 100 ? "" : "↑";
+  if (percent === 100) {
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("width", "18");
+    icon.setAttribute("height", "18");
+    icon.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "m5 12 4 4 10-10");
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "2");
+    icon.append(path);
+    captureFeedbackIcon.append(icon);
+  }
   captureFeedback.hidden = false;
   if (flash) {
     cameraRecorder.classList.remove("flash");

@@ -13,7 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&family=Italiana&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="rsvp.css?v=15">
+  <link rel="stylesheet" href="rsvp.css?v=16">
+  <link rel="stylesheet" href="camera.css?v=1">
   <link rel="stylesheet" href="language.css?v=1">
 </head>
 <body>
@@ -40,9 +41,49 @@
       <h1>My photos</h1>
       <p class="photos-intro">Only photos uploaded while signed in to this account appear here.</p>
       <p class="status" id="myPhotosStatus" role="status" aria-live="polite">Loading your photos…</p>
+<div hidden><div id="uploadGate"><div id="uploadLock"><p id="uploadLockMessage"></p></div></div><button id="uploadButton" type="button"></button><button id="cameraButton" type="button"></button></div>
+      <input id="uploadInput" type="file" accept="image/*,video/*" multiple hidden>
+      <input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
+
+      <button class="floating-camera" id="floatingCameraButton" type="button" aria-label="Open camera">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8.5 5.5 10 3.75h4l1.5 1.75H19A2.5 2.5 0 0 1 21.5 8v9A2.5 2.5 0 0 1 19 19.5H5A2.5 2.5 0 0 1 2.5 17V8A2.5 2.5 0 0 1 5 5.5h3.5Z"/>
+          <circle cx="12" cy="12.5" r="3.5"/>
+        </svg>
+      </button>
+      <div class="camera-toast" id="cameraToast" role="status" aria-live="polite" hidden>
+        <span id="cameraToastMessage"></span>
+        <button id="cameraToastClose" type="button" aria-label="Dismiss message">&times;</button>
+      </div>
+
+      <div class="camera-recorder" id="cameraRecorder" role="dialog" aria-modal="true" aria-label="High-quality camera">
+        <div class="camera-topbar"><button class="camera-recorder-close" id="cameraRecorderClose" type="button" aria-label="Close camera">&times;</button><button class="camera-quality-button" id="cameraQualityButton" type="button" aria-label="Change camera quality">1080p</button><button class="camera-exposure-button" id="cameraExposureButton" type="button" aria-label="Change exposure">EV <span id="cameraExposureValue">0.0</span></button></div>
+        <div class="camera-quality" id="cameraQualityControl" hidden><button type="button" data-quality="1080">1080p</button><button type="button" data-quality="2160">4K</button></div>
+        <div class="camera-exposure" id="cameraExposureControl" hidden><button type="button" data-exposure="-2">−2</button><button type="button" data-exposure="-1">−1</button><button type="button" data-exposure="0">0</button><button type="button" data-exposure="1">+1</button><button type="button" data-exposure="2">+2</button></div>
+        <div class="camera-stage">
+          <video id="cameraPreview" autoplay muted playsinline></video><div class="camera-grid" aria-hidden="true"></div>
+          <div class="capture-feedback" id="captureFeedback" hidden><span id="captureFeedbackIcon">↑</span><div><strong id="captureFeedbackText">Uploading photo</strong><progress id="captureProgress" max="100" value="0"></progress></div><small id="captureProgressText">0%</small></div>
+          <p id="cameraResolution">Starting high-quality camera…</p><p class="recording-duration" id="recordingDuration" hidden>Recording · 00:00 / 00:45</p>
+          <div class="camera-zoom" id="cameraZoomControl" hidden><input id="cameraZoom" type="range" min="1" max="1" step="0.1" value="1" hidden><button type="button" data-zoom="0.5">.5</button><button type="button" data-zoom="1">1×</button><button type="button" data-zoom="2">2</button><button type="button" data-zoom="3">3</button><output id="cameraZoomValue">1×</output></div>
+        </div>
+        <div class="camera-recorder-actions"><button id="recordVideoButton" type="button">Video</button><button class="camera-shutter" id="takePhotoButton" type="button" aria-label="Take photo"><span></span></button><button class="camera-switch" id="cameraSwitchButton" type="button" aria-label="Switch camera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 8.5A7 7 0 0 1 18.7 7M17.9 15.5A7 7 0 0 1 5.3 17"/></svg></button></div>
+      </div>
+
+      <div class="selection" id="selection" hidden>
+        <span aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></span>
+        <div>
+          <strong id="selectionCount"></strong>
+          <small id="selectionNames"></small>
+        </div>
+        <button id="clearButton">Clear</button>
+      </div>
+
+      <button class="submit" id="submitButton" type="button" hidden>Upload memories</button>
+      <p class="upload-status" id="uploadStatus" role="status" aria-live="polite"></p>
       <div class="my-photos-grid" id="myPhotosGrid"></div>
     </section>
   </main>
-  <script src="config.js?v=2"></script><script src="nav.js?v=3"></script><script src="language.js?v=1"></script><script src="rsvp.js?v=12"></script>
+  <script src="config.js?v=2"></script><script src="nav.js?v=3"></script><script src="language.js?v=1"></script><script src="rsvp.js?v=13"></script>
+  <script type="module" src="script.js?v=41"></script>
 </body>
 </html>

@@ -20,6 +20,8 @@ logoutButton.addEventListener("click", logout);
 rsvpTab.addEventListener("click", () => switchSection("rsvp"));
 photosTab.addEventListener("click", () => switchSection("photos"));
 window.addEventListener("pagehide", revokePhotoUrls);
+window.addEventListener("hashchange", () => { if (session) switchSection(location.hash === "#photos" ? "photos" : "rsvp"); });
+document.addEventListener("wedding:photos-uploaded", () => { if (session) { revokePhotoUrls(); myPhotosGrid.replaceChildren(); loadMyPhotos(); } });
 restoreSession();
 
 function saveSession(value) {
@@ -89,6 +91,8 @@ async function openAccount() {
 
 async function switchSection(section) {
   const showPhotos = section === "photos";
+  history.replaceState(null, "", showPhotos ? "#photos" : "#rsvp");
+  if (!showPhotos) document.dispatchEvent(new Event("wedding:close-camera"));
   try { localStorage.setItem(ACCOUNT_SECTION_KEY, showPhotos ? "photos" : "rsvp"); } catch {}
   rsvpTab.classList.toggle("active", !showPhotos);
   photosTab.classList.toggle("active", showPhotos);
