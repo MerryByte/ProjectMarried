@@ -14,6 +14,16 @@ let session = null;
 let config = null;
 let photosLoaded = false;
 let photoObjectUrls = [];
+let myPhotoFiles = [];
+const downloadAllPhotos = document.querySelector("#downloadAllPhotos");
+downloadAllPhotos.addEventListener("click", () => window.downloadPhotosZip(myPhotoFiles, fetchMyPhoto, downloadAllPhotos, myPhotosStatus));
+
+async function fetchMyPhoto(file) {
+  const path = file.path.split("/").map(encodeURIComponent).join("/");
+  const response = await api(`/storage/v1/object/authenticated/${config.bucket}/${path}`, { headers: authHeaders() });
+  if (!response.ok) throw new Error(`Unable to download ${file.name} (${response.status}).`);
+  return response.blob();
+}
 
 rsvpForm.addEventListener("submit", saveRsvp);
 logoutButton.addEventListener("click", logout);
@@ -102,6 +112,8 @@ async function switchSection(section) {
 }
 
 async function loadMyPhotos() {
+  downloadAllPhotos.disabled = true;
+  myPhotoFiles = [];
   photosLoaded = true;
   myPhotosStatus.textContent = "Loading your memories…";
   try {
@@ -113,6 +125,8 @@ async function loadMyPhotos() {
       files.push(...items.filter(item => item.id && /^(image|video)\//.test(item.metadata?.mimetype || "")).map(item => ({ ...item, path: `${root}/${folder.name}/${item.name}` })));
     }
     files.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    myPhotoFiles = files.filter(file => file.metadata?.mimetype?.startsWith("image/"));
+    downloadAllPhotos.disabled = !myPhotoFiles.length;
     myPhotosGrid.replaceChildren();
     if (!files.length) {
       myPhotosStatus.textContent = "You have not uploaded any signed-in photos or videos yet.";
@@ -127,14 +141,18 @@ async function loadMyPhotos() {
 }
 
 async function listStorageFolder(prefix) {
-  const response = await api(`/storage/v1/object/list/${config.bucket}`, {
-    method: "POST",
-    headers: { ...authHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ prefix, limit: 1000, offset: 0, sortBy: { column: "created_at", order: "desc" } }),
+  const files = [];
+  for (let offset = 0; ; offset += 1000) {
+    const response = await api(`/storage/v1/object/list/${config.bucket}`, {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: "created_at", order: "desc" } }),
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.message || result.error || "Unable to load your memories.");
-  return result;
+  files.push(...result);
+  if (result.length < 1000) return files;
+  }
 }
 
 async function addMyPhoto(file) {
@@ -156,7 +174,17 @@ async function addMyPhoto(file) {
   download.textContent = "Download";
   download.href = "#";
   download.addEventListener("click", event => downloadMyPhoto(event, file));
-  card.append(media, download);
+  if (isVideo) {
+    card.append(media, download);
+  } else {
+    const view = document.createElement("button");
+    view.type = "button";
+    view.className = "my-photo-view";
+    view.setAttribute("aria-label", "View photo full screen");
+    view.addEventListener("click", () => window.viewWeddingPhoto(file, fetchMyPhoto));
+    view.append(media);
+    card.append(view, download);
+  }
   myPhotosGrid.append(card);
 
   const path = file.path.split("/").map(encodeURIComponent).join("/");

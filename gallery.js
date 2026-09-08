@@ -6,6 +6,19 @@ const galleryStatus = document.querySelector("#galleryStatus");
 const photoGrid = document.querySelector("#photoGrid");
 const photoCount = document.querySelector("#photoCount");
 const loadMoreButton = document.querySelector("#loadMoreButton");
+const downloadAllPhotos = document.querySelector("#downloadAllPhotos");
+downloadAllPhotos.addEventListener("click", () => {
+  const config = activeConfig, token = activeToken;
+  const photos = pendingGalleryPhotos.map(entry => entry.photo).filter(photo => photo.metadata?.mimetype?.startsWith("image/"));
+  window.downloadPhotosZip(photos, async photo => {
+    const path = photo.path.split("/").map(encodeURIComponent).join("/");
+    const response = await fetch(`${config.supabaseUrl}/storage/v1/object/authenticated/${config.bucket}/${path}`, {
+      headers: { apikey: config.anonKey, Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error(`Unable to download ${photo.name} (${response.status}).`);
+    return response.blob();
+  }, downloadAllPhotos, galleryStatus);
+});
 const selectAllPhotos = document.querySelector("#selectAllPhotos");
 const clearPhotoSelection = document.querySelector("#clearPhotoSelection");
 const deleteSelectedPhotos = document.querySelector("#deleteSelectedPhotos");
@@ -95,6 +108,7 @@ async function signIn(event) {
 }
 
 async function showGallery(config, token) {
+  downloadAllPhotos.disabled = true;
   activeConfig = config;
   activeToken = token;
   loginSection.hidden = true;
@@ -126,6 +140,7 @@ async function showGallery(config, token) {
 
     pendingGalleryPhotos = photos.map(photo => ({ photo, familyName: photo.uploaderId ? familyNames.get(photo.uploaderId) || "Unknown reservation" : "Unknown guest" }));
     renderedPhotoCount = 0;
+    downloadAllPhotos.disabled = !photos.some(photo => photo.metadata?.mimetype?.startsWith("image/"));
     renderNextPhotos();
   } catch (error) {
     galleryStatus.textContent = error.message;
@@ -276,14 +291,18 @@ async function loadReservations() {
 }
 
 async function listFolder(config, token, prefix) {
-  const response = await fetch(`${config.supabaseUrl}/storage/v1/object/list/${config.bucket}`, {
-    method: "POST",
-    headers: { apikey: config.anonKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ prefix, limit: 1000, offset: 0, sortBy: { column: "created_at", order: "desc" } }),
+  const files = [];
+  for (let offset = 0; ; offset += 1000) {
+    const response = await fetch(`${config.supabaseUrl}/storage/v1/object/list/${config.bucket}`, {
+      method: "POST",
+      headers: { apikey: config.anonKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: "created_at", order: "desc" } }),
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.message || result.error || `Unable to list photos (${response.status}).`);
-  return result;
+  files.push(...result);
+  if (result.length < 1000) return files;
+  }
 }
 
 function addPhoto(config, token, photo, familyName) {
@@ -505,8 +524,8 @@ async function downloadPhoto(event, index) {
 }
 
 async function openLightbox(index) {
-  const loaded = await showLightboxPhoto(index);
-  if (loaded) photoLightbox.showModal();
+  if (!photoLightbox.open) photoLightbox.showModal();
+  await showLightboxPhoto(index);
 }
 
 async function showLightboxPhoto(index) {
@@ -514,6 +533,7 @@ async function showLightboxPhoto(index) {
   activePhotoIndex = (index + galleryPhotos.length) % galleryPhotos.length;
   const photo = galleryPhotos[activePhotoIndex];
   const requestedIndex = activePhotoIndex;
+  lightboxImage.removeAttribute("src");
   lightboxCaption.textContent = `Loading full photo… · ${requestedIndex + 1} of ${galleryPhotos.length}`;
   let fullUrl;
   try {
@@ -522,7 +542,7 @@ async function showLightboxPhoto(index) {
     lightboxCaption.textContent = error.message;
     return false;
   }
-  if (activePhotoIndex !== requestedIndex) return;
+  if (activePhotoIndex !== requestedIndex || !photoLightbox.open) return;
   lightboxImage.src = fullUrl;
   lightboxCaption.textContent = `${photo.familyName} · ${activePhotoIndex + 1} of ${galleryPhotos.length}`;
   const hasMultiplePhotos = galleryPhotos.length > 1;
