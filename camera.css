@@ -48,4 +48,4 @@
 
 .camera-toast[hidden] { display:none; }
 .floating-camera:focus-visible { outline:3px solid white; outline-offset:3px; }
-html.camera-open,html.camera-open body { overflow:hidden; }
+html.camera-open,html.camera-open body { overflow:hidden; touch-action:manipulation; }

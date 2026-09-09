@@ -1,4 +1,6 @@
 const uploadInput = document.querySelector("#uploadInput");
+history.scrollRestoration = "manual";
+window.addEventListener("pageshow", () => window.scrollTo(0, 0));
 const cameraInput = document.querySelector("#cameraInput");
 const selection = document.querySelector("#selection");
 const selectionCount = document.querySelector("#selectionCount");
