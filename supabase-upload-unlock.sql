@@ -34,6 +34,12 @@ create policy "Uploads open on wedding date"
 on storage.objects as restrictive for insert
 to anon, authenticated
 with check (
-  bucket_id = 'wedding-uploads'
-  and now() >= (select upload_unlock_at from public.site_settings where id = 'wedding')
+  (
+    bucket_id = 'wedding-uploads'
+    and now() >= (select upload_unlock_at from public.site_settings where id = 'wedding')
+  )
+  or (
+    bucket_id = 'wedding-prewedding'
+    and lower((select auth.jwt()->>'email')) = 'anatoliybar@gmail.com'
+  )
 );
