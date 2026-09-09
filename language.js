@@ -6,6 +6,8 @@
     "Share the joy": "Розділіть нашу радість", "Wedding schedule": "Програма весілля",
     "Ceremony": "Церемонія", "Celebration": "Святкування", "Time to be announced": "Час повідомимо згодом",
     "Location to be announced": "Місце повідомимо згодом", "From your point of view": "Вашими очима",
+    "Dress code": "Дрес-код", "Celebrate in style.": "Святкуймо зі стилем.",
+    "Please dress with the church setting in mind and choose modest attire. Kindly leave white for the bride.": "Будь ласка, обирайте скромне вбрання, пам’ятаючи про церковну обстановку. Просимо залишити білий колір нареченій.",
     "Help us remember": "Допоможіть нам зберегти", "every little moment.": "кожну мить.",
     "Share your photos and videos from our day.": "Поділіться фото й відео з нашого свята.",
     "Checking when photo sharing opens…": "Перевіряємо, коли можна буде ділитися фото…",
