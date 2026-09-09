@@ -228,6 +228,17 @@ async function uploadCarouselImages(event) { event.preventDefault(); const files
 
 async function uploadCarouselImages(event) { event.preventDefault(); const files=[...carouselInput.files]; if(!files.length)return; carouselStatus.textContent="Uploading…"; const bucket=activeConfig.publicBucket||"wedding-prewedding"; for(const file of files){const name=`prewedding/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,"-")}`;const response=await fetch(`${activeConfig.supabaseUrl}/storage/v1/object/${bucket}/${name}`,{method:"POST",headers:{apikey:activeConfig.anonKey,Authorization:`Bearer ${activeToken}`,"Content-Type":file.type,"x-upsert":"false"},body:file});if(!response.ok){const result=await response.json().catch(()=>({}));carouselStatus.textContent=result.message||result.error||`Unable to upload the images (${response.status}).`;return}} carouselInput.value="";carouselStatus.textContent=`${files.length} image${files.length===1?"":"s"} uploaded.` }
 
+async function loadCarouselImages() {
+  carouselStatus.textContent="Loading images…";
+  const bucket=activeConfig.publicBucket||"wedding-prewedding";
+  const response=await fetch(`${activeConfig.supabaseUrl}/storage/v1/object/list/${bucket}`,{method:"POST",headers:{apikey:activeConfig.anonKey,Authorization:`Bearer ${activeToken}`,"Content-Type":"application/json"},body:JSON.stringify({prefix:"prewedding",limit:100,sortBy:{column:"name",order:"asc"}})});
+  const files=await response.json();
+  if(!response.ok){carouselStatus.textContent=files.message||"Unable to load carousel images.";return}
+  const images=files.filter(file=>/\.(jpe?g|png|webp|gif)$/i.test(file.name||""));
+  carouselGrid.replaceChildren(...images.map(file=>{const card=document.createElement("article");card.className="photo";const image=document.createElement("img");image.className="loaded";image.src=`${activeConfig.supabaseUrl}/storage/v1/object/public/${bucket}/prewedding/${encodeURIComponent(file.name)}`;image.alt=file.name;const footer=document.createElement("div");footer.className="photo-footer";const actions=document.createElement("div");actions.className="photo-actions";const button=document.createElement("button");button.type="button";button.className="photo-download";button.textContent="Remove";button.addEventListener("click",()=>removeCarouselImage(file.name,card));actions.append(button);footer.append(actions);card.append(image,footer);return card}));
+  carouselStatus.textContent=images.length?`${images.length} image${images.length===1?"":"s"} in the carousel.`:"No carousel images added yet.";
+}
+
 function renderNextPhotos() {
   const nextPhotos = pendingGalleryPhotos.slice(renderedPhotoCount, renderedPhotoCount + GALLERY_PAGE_SIZE);
   nextPhotos.forEach(({ photo, familyName }) => addPhoto(activeConfig, activeToken, photo, familyName));
