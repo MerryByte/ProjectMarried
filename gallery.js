@@ -36,6 +36,7 @@ const uploadUnlockAt = document.querySelector("#uploadUnlockAt");
 const scheduleInputs = ["ceremonyTime", "ceremonyLocation", "celebrationTime", "celebrationLocation"];
 const settingsStatus = document.querySelector("#settingsStatus");
 const carouselForm = document.querySelector("#carouselForm"), carouselInput = document.querySelector("#carouselInput"), carouselStatus = document.querySelector("#carouselStatus");
+const carouselGrid = document.querySelector("#carouselGrid");
 const reservationStatus = document.querySelector("#reservationStatus");
 const reservationRows = document.querySelector("#reservationRows");
 const reservationTotals = document.querySelector("#reservationTotals");
@@ -67,6 +68,7 @@ carouselTab.addEventListener("click", () => switchView("carousel"));
 settingsForm.addEventListener("submit", saveUploadSettings);
 carouselForm.addEventListener("submit", uploadCarouselImages);
 carouselForm.addEventListener("submit", () => { activeConfig.bucket = activeConfig.publicBucket || "wedding-prewedding"; }, true);
+carouselForm.addEventListener("submit", () => setTimeout(loadCarouselImages, 1500));
 loadMoreButton.addEventListener("click", renderNextPhotos);
 selectAllPhotos.addEventListener("click", selectVisiblePhotos);
 clearPhotoSelection.addEventListener("click", clearSelectedPhotos);
@@ -120,7 +122,6 @@ async function showGallery(config, token) {
   loginSection.hidden = true;
   gallerySection.hidden = false;
   adminTabs.hidden = false;
-  carouselSection.hidden = false;
   logoutButton.hidden = false;
   galleryStatus.textContent = "Loading photos…";
 
@@ -217,7 +218,11 @@ async function switchView(view) {
   carouselTab.classList.toggle("active", view === "carousel");
   if (showReservations) await loadReservations();
   if (view === "settings") await loadUploadSettings();
+  if (view === "carousel") await loadCarouselImages();
 }
+
+async function loadCarouselImages() { carouselStatus.textContent="Loading images…"; const bucket=activeConfig.publicBucket||"wedding-prewedding"; const response=await fetch(`${activeConfig.supabaseUrl}/storage/v1/object/list/${bucket}`,{method:"POST",headers:{apikey:activeConfig.anonKey,Authorization:`Bearer ${activeToken}`,"Content-Type":"application/json"},body:JSON.stringify({prefix:"prewedding",limit:100,sortBy:{column:"name",order:"asc"}})}); const files=await response.json(); if(!response.ok){carouselStatus.textContent=files.message||"Unable to load carousel images.";return} carouselGrid.replaceChildren(...files.filter(file=>/\.(jpe?g|png|webp|gif)$/i.test(file.name||"")).map(file=>{const card=document.createElement("article");card.className="photo";const image=document.createElement("img");image.src=`${activeConfig.supabaseUrl}/storage/v1/object/public/${bucket}/prewedding/${encodeURIComponent(file.name)}`;image.alt=file.name;const button=document.createElement("button");button.type="button";button.textContent="Remove";button.addEventListener("click",()=>removeCarouselImage(file.name,card));card.append(image,button);return card})); carouselStatus.textContent=files.length?`${files.length} image${files.length===1?"":"s"} in the carousel.` : "No carousel images added yet." }
+async function removeCarouselImage(name, card) { if(!confirm("Remove this carousel image?"))return; const bucket=activeConfig.publicBucket||"wedding-prewedding"; const response=await fetch(`${activeConfig.supabaseUrl}/storage/v1/object/${bucket}/prewedding/${encodeURIComponent(name)}`,{method:"DELETE",headers:{apikey:activeConfig.anonKey,Authorization:`Bearer ${activeToken}`}}); if(!response.ok){carouselStatus.textContent="Unable to remove the image.";return} card.remove(); carouselStatus.textContent="Carousel image removed." }
 
 async function uploadCarouselImages(event) { event.preventDefault(); const files=[...carouselInput.files]; if(!files.length)return; carouselStatus.textContent="Uploading…"; for(const file of files){const name=`prewedding/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,"-")}`;const response=await fetch(`${activeConfig.supabaseUrl}/storage/v1/object/${activeConfig.bucket}/${name}`,{method:"POST",headers:{apikey:activeConfig.anonKey,Authorization:`Bearer ${activeToken}`,"Content-Type":file.type,"x-upsert":"false"},body:file});if(!response.ok){carouselStatus.textContent="Unable to upload the images.";return}} carouselInput.value="";carouselStatus.textContent=`${files.length} image${files.length===1?"":"s"} uploaded.` }
 
