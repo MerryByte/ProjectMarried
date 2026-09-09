@@ -1,6 +1,6 @@
 const uploadInput = document.querySelector("#uploadInput");
 history.scrollRestoration = "manual";
-window.addEventListener("pageshow", () => window.scrollTo(0, 0));
+window.addEventListener("pageshow", () => { const navigation=performance.getEntriesByType("navigation")[0]; if(navigation?.type==="reload" && location.hash) history.replaceState(null,"",`${location.pathname}${location.search}`); window.scrollTo(0, 0); setTimeout(() => window.scrollTo(0, 0), 0); });
 const cameraInput = document.querySelector("#cameraInput");
 const selection = document.querySelector("#selection");
 const selectionCount = document.querySelector("#selectionCount");
