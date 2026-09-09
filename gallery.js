@@ -27,12 +27,15 @@ const adminTabs = document.querySelector("#adminTabs");
 const photosTab = document.querySelector("#photosTab");
 const reservationsTab = document.querySelector("#reservationsTab");
 const settingsTab = document.querySelector("#settingsTab");
+const carouselTab = document.querySelector("#carouselTab");
+const carouselSection = document.querySelector("#carouselSection");
 const reservationsSection = document.querySelector("#reservationsSection");
 const settingsSection = document.querySelector("#settingsSection");
 const settingsForm = document.querySelector("#settingsForm");
 const uploadUnlockAt = document.querySelector("#uploadUnlockAt");
 const scheduleInputs = ["ceremonyTime", "ceremonyLocation", "celebrationTime", "celebrationLocation"];
 const settingsStatus = document.querySelector("#settingsStatus");
+const carouselForm = document.querySelector("#carouselForm"), carouselInput = document.querySelector("#carouselInput"), carouselStatus = document.querySelector("#carouselStatus");
 const reservationStatus = document.querySelector("#reservationStatus");
 const reservationRows = document.querySelector("#reservationRows");
 const reservationTotals = document.querySelector("#reservationTotals");
@@ -60,7 +63,9 @@ logoutButton.addEventListener("click", signOut);
 photosTab.addEventListener("click", () => switchView("photos"));
 reservationsTab.addEventListener("click", () => switchView("reservations"));
 settingsTab.addEventListener("click", () => switchView("settings"));
+carouselTab.addEventListener("click", () => switchView("carousel"));
 settingsForm.addEventListener("submit", saveUploadSettings);
+carouselForm.addEventListener("submit", uploadCarouselImages);
 loadMoreButton.addEventListener("click", renderNextPhotos);
 selectAllPhotos.addEventListener("click", selectVisiblePhotos);
 clearPhotoSelection.addEventListener("click", clearSelectedPhotos);
@@ -206,9 +211,13 @@ async function switchView(view) {
   gallerySection.hidden = !showPhotos;
   reservationsSection.hidden = !showReservations;
   settingsSection.hidden = view !== "settings";
+  carouselSection.hidden = view !== "carousel";
+  carouselTab.classList.toggle("active", view === "carousel");
   if (showReservations) await loadReservations();
   if (view === "settings") await loadUploadSettings();
 }
+
+async function uploadCarouselImages(event) { event.preventDefault(); const files=[...carouselInput.files]; if(!files.length)return; carouselStatus.textContent="Uploading…"; for(const file of files){const name=`prewedding/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,"-")}`;const response=await fetch(`${activeConfig.supabaseUrl}/storage/v1/object/${activeConfig.bucket}/${name}`,{method:"POST",headers:{apikey:activeConfig.anonKey,Authorization:`Bearer ${activeToken}`,"Content-Type":file.type,"x-upsert":"false"},body:file});if(!response.ok){carouselStatus.textContent="Unable to upload the images.";return}} carouselInput.value="";carouselStatus.textContent=`${files.length} image${files.length===1?"":"s"} uploaded.` }
 
 function renderNextPhotos() {
   const nextPhotos = pendingGalleryPhotos.slice(renderedPhotoCount, renderedPhotoCount + GALLERY_PAGE_SIZE);

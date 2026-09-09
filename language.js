@@ -7,6 +7,7 @@
     "Ceremony": "Церемонія", "Celebration": "Святкування", "Time to be announced": "Час повідомимо згодом",
     "Location to be announced": "Місце повідомимо згодом", "From your point of view": "Вашими очима",
     "Dress code": "Дрес-код", "Celebrate in style.": "Святкуймо зі стилем.",
+    "Before the big day": "До великого дня", "Our story so far.": "Наша історія досі.",
     "Please dress with the church setting in mind and choose modest attire. Kindly leave white for the bride.": "Будь ласка, обирайте скромне вбрання, пам’ятаючи про церковну обстановку. Просимо залишити білий колір нареченій.",
     "Note: The celebration will be alcohol-free. We kindly ask guests not to bring or consume alcohol.": "Примітка: святкування буде без алкоголю. Просимо гостей не приносити та не вживати алкоголь.",
     "Help us remember": "Допоможіть нам зберегти", "every little moment.": "кожну мить.",
