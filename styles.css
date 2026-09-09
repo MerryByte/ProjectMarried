@@ -62,12 +62,12 @@ h1 em { font-weight: 400; font-size: .66em; }
 .schedule-list p strong { color:var(--ink); font-size:13px; font-weight:600; }
 .schedule-list p small { margin-top:5px; font-size:12px; }
 
-.dress-code { padding:100px 24px; text-align:center; background:#e8e8df; }
+.dress-code { padding:100px 24px; text-align:center; background:var(--cream); }
 .dress-code .eyebrow { color:var(--sage); }
 .dress-code h2 { margin-bottom:0; }
 .dress-code .intro { margin-bottom:0; }
 
-.share { min-height: 100svh; padding: 120px 24px 80px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.share { min-height: 100svh; padding: 120px 24px 80px; text-align: center; display: flex; flex-direction: column; align-items: center; background:#e8e8df; }
 .share .eyebrow { color: var(--sage); }
 .registry { padding:90px 24px; text-align:center; background:#e8e8df; scroll-margin-top:96px; }
 .registry .eyebrow { color:var(--sage); }
