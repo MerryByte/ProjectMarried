@@ -17,3 +17,11 @@ drop policy if exists "Anyone can list prewedding images" on storage.objects;
 create policy "Anyone can list prewedding images"
 on storage.objects for select to anon, authenticated
 using (bucket_id = 'wedding-prewedding');
+
+drop policy if exists "Wedding admins can delete prewedding images" on storage.objects;
+create policy "Wedding admins can delete prewedding images"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'wedding-prewedding'
+  and lower((select auth.jwt()->>'email')) = 'anatoliybar@gmail.com'
+);
