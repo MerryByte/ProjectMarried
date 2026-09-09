@@ -66,7 +66,7 @@ settingsTab.addEventListener("click", () => switchView("settings"));
 carouselTab.addEventListener("click", () => switchView("carousel"));
 settingsForm.addEventListener("submit", saveUploadSettings);
 carouselForm.addEventListener("submit", uploadCarouselImages);
-carouselForm.addEventListener("submit", () => { activeConfig.bucket = activeConfig.publicBucket || "wedding-prewedding"; });
+carouselForm.addEventListener("submit", () => { activeConfig.bucket = activeConfig.publicBucket || "wedding-prewedding"; }, true);
 loadMoreButton.addEventListener("click", renderNextPhotos);
 selectAllPhotos.addEventListener("click", selectVisiblePhotos);
 clearPhotoSelection.addEventListener("click", clearSelectedPhotos);
@@ -115,11 +115,12 @@ async function signIn(event) {
 
 async function showGallery(config, token) {
   downloadAllPhotos.disabled = true;
-  activeConfig = config;
+  activeConfig = { ...config, publicBucket: config.publicBucket || "wedding-prewedding" };
   activeToken = token;
   loginSection.hidden = true;
   gallerySection.hidden = false;
   adminTabs.hidden = false;
+  carouselSection.hidden = false;
   logoutButton.hidden = false;
   galleryStatus.textContent = "Loading photos…";
 
@@ -581,6 +582,7 @@ function signOut() {
   gallerySection.hidden = true;
   reservationsSection.hidden = true;
   settingsSection.hidden = true;
+  carouselSection.hidden = true;
   adminTabs.hidden = true;
   logoutButton.hidden = true;
   loginSection.hidden = false;
