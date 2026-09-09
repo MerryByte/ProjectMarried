@@ -66,6 +66,7 @@ settingsTab.addEventListener("click", () => switchView("settings"));
 carouselTab.addEventListener("click", () => switchView("carousel"));
 settingsForm.addEventListener("submit", saveUploadSettings);
 carouselForm.addEventListener("submit", uploadCarouselImages);
+carouselForm.addEventListener("submit", () => { activeConfig.bucket = activeConfig.publicBucket || "wedding-prewedding"; });
 loadMoreButton.addEventListener("click", renderNextPhotos);
 selectAllPhotos.addEventListener("click", selectVisiblePhotos);
 clearPhotoSelection.addEventListener("click", clearSelectedPhotos);

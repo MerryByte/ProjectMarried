@@ -10,6 +10,7 @@ export default {
           supabaseUrl,
           anonKey,
           bucket: "wedding-uploads",
+          publicBucket: "wedding-prewedding",
         },
         { headers: { "Cache-Control": "no-store" } },
       );
