@@ -61,6 +61,7 @@ h1 em { font-weight: 400; font-size: .66em; }
 .schedule-list p strong,.schedule-list p small { display:block; }
 .schedule-list p strong { color:var(--ink); font-size:13px; font-weight:600; }
 .schedule-list p small { margin-top:5px; font-size:12px; }
+.schedule-note { color:var(--sage); line-height:1.5; }
 
 .dress-code { padding:100px 24px; text-align:center; background:var(--cream); }
 .dress-code .eyebrow { color:var(--sage); }
