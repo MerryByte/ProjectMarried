@@ -1,12 +1,14 @@
 create table if not exists public.site_settings (
   id text primary key,
-  upload_unlock_at timestamptz not null,
+  upload_unlock_at timestamptz,
   ceremony_time time,
   ceremony_location text,
   celebration_time time,
   celebration_location text,
   updated_at timestamptz not null default now()
 );
+
+alter table public.site_settings alter column upload_unlock_at drop not null;
 
 insert into public.site_settings (id, upload_unlock_at)
 values ('wedding', '2026-12-14 00:00:00-08')

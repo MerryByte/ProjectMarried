@@ -33,6 +33,7 @@ const reservationsSection = document.querySelector("#reservationsSection");
 const settingsSection = document.querySelector("#settingsSection");
 const settingsForm = document.querySelector("#settingsForm");
 const uploadUnlockAt = document.querySelector("#uploadUnlockAt");
+const uploadUnlockTba = document.querySelector("#uploadUnlockTba");
 const scheduleInputs = ["ceremonyTime", "ceremonyLocation", "celebrationTime", "celebrationLocation"];
 const settingsStatus = document.querySelector("#settingsStatus");
 const carouselForm = document.querySelector("#carouselForm"), carouselInput = document.querySelector("#carouselInput"), carouselStatus = document.querySelector("#carouselStatus");
@@ -66,6 +67,7 @@ reservationsTab.addEventListener("click", () => switchView("reservations"));
 settingsTab.addEventListener("click", () => switchView("settings"));
 carouselTab.addEventListener("click", () => switchView("carousel"));
 settingsForm.addEventListener("submit", saveUploadSettings);
+uploadUnlockTba.addEventListener("change", () => { uploadUnlockAt.disabled = uploadUnlockTba.checked; if (uploadUnlockTba.checked) uploadUnlockAt.value = ""; });
 carouselForm.addEventListener("submit", uploadCarouselImages);
 carouselForm.addEventListener("submit", () => { activeConfig.bucket = activeConfig.publicBucket || "wedding-prewedding"; }, true);
 carouselForm.addEventListener("submit", () => setTimeout(loadCarouselImages, 1500));
@@ -258,8 +260,15 @@ async function loadUploadSettings() {
     settingsStatus.textContent = rows.message || "Site settings have not been installed yet.";
     return;
   }
-  const date = new Date(rows[0].upload_unlock_at);
-  uploadUnlockAt.value = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  if (rows[0].upload_unlock_at) {
+    const date = new Date(rows[0].upload_unlock_at);
+    uploadUnlockAt.value = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    uploadUnlockTba.checked = false;
+  } else {
+    uploadUnlockAt.value = "";
+    uploadUnlockTba.checked = true;
+    uploadUnlockAt.disabled = true;
+  }
   scheduleInputs.forEach(id => {
     const key = id.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
     document.querySelector(`#${id}`).value = rows[0][key] || "";
@@ -271,14 +280,14 @@ async function saveUploadSettings(event) {
   event.preventDefault();
   const button = settingsForm.querySelector("button");
   const date = new Date(uploadUnlockAt.value);
-  if (!Number.isFinite(date.getTime())) return;
+  if (!uploadUnlockTba.checked && !Number.isFinite(date.getTime())) return;
   button.disabled = true;
   settingsStatus.textContent = "Saving…";
   const response = await fetch(`${activeConfig.supabaseUrl}/rest/v1/site_settings?id=eq.wedding`, {
     method: "PATCH",
     headers: { apikey: activeConfig.anonKey, Authorization: `Bearer ${activeToken}`, "Content-Type": "application/json", Prefer: "return=representation" },
     body: JSON.stringify({
-      upload_unlock_at: date.toISOString(),
+      upload_unlock_at: uploadUnlockTba.checked ? null : date.toISOString(),
       ceremony_time: document.querySelector("#ceremonyTime").value || null,
       ceremony_location: document.querySelector("#ceremonyLocation").value.trim() || null,
       celebration_time: document.querySelector("#celebrationTime").value || null,
